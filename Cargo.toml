@@ -1,0 +1,6 @@
+[package]
+name = "game-boy-rust"
+version = "0.1.0"
+authors = ["Tomasz Mikus <mikus.tomasz@gmail.com>"]
+
+[dependencies]
