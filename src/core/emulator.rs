@@ -39,6 +39,12 @@ impl Emulator {
   }
 
   pub fn reset(&mut self) {
-    self.memory.reset();
+    self.cpu = Cpu::new();
+    self.cpu.emulator = self;
+    self.interrupt = Interrupt::new();
+    self.interrupt.emulator = self;
+    self.memory = Memory::new();
+    self.memory.emulator = self;
+    self.registers = Registers::new();
   }
 }
