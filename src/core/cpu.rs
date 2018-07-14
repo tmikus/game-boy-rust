@@ -2,22 +2,27 @@ use {
   core::{
     memory::Memory,
     instruction::Instruction,
+    interrupt::Interrupt,
     registers::Registers,
   },
 };
 
 pub struct Cpu {
-  instructions: [Instruction; 1],
-  memory: Memory,
-  registers: Registers,
+  pub instructions: [Instruction; 1],
+  pub interrupt: Interrupt,
+  pub memory: Memory,
+  pub registers: Registers,
+  pub ticks: u64,
 }
 
 impl Cpu {
   pub fn new() -> Cpu {
     Cpu {
       instructions: get_instructions(),
+      interrupt: Interrupt::new(),
       memory: Memory::new(),
       registers: Registers::new(),
+      ticks: 0,
     }
   }
 

@@ -1,7 +1,7 @@
 use {
   core::{
+    cpu::Cpu,
     keys::Keys,
-    registers::Registers,
   },
   rand,
 };
@@ -58,7 +58,7 @@ impl Memory {
     }
   }
 
-  pub fn read_byte(&self, address: u16) -> u8 {
+  pub fn read_byte(&self, cpu: &Cpu, address: u16) -> u8 {
     if address <= 0x7FFF {
       return self.cart[address as usize];
     }
@@ -83,13 +83,13 @@ impl Memory {
     }
     // TODO: Add GPU
     if address == 0xFF00 {
-      if !(self.io[0x00] & 0x20) {
+      if (self.io[0x00] & 0x20) == 0 {
         return 0xC0 | self.keys.get_keys_1() | 0x10;
       }
-      if !(self.io[0x00] & 0x10) {
+      if (self.io[0x00] & 0x10) == 0 {
         return 0xC0 | self.keys.get_keys_2() | 0x20;
       }
-      if !(self.io[0x00] & 0x30) {
+      if (self.io[0x00] & 0x30) == 0 {
         return 0xFF;
       }
       return 0;
@@ -104,17 +104,18 @@ impl Memory {
     return 0;
   }
 
-  pub fn read_short(&self, address: u16) -> u16 {
-    self.read_byte(address) as u16 | (self.read_byte(address + 1) as u16) << 8
+  pub fn read_short(&self, cpu: &Cpu, address: u16) -> u16 {
+    self.read_byte(cpu, address) as u16 | (self.read_byte(cpu, address + 1) as u16) << 8
   }
 
-  pub fn read_short_from_stack(&self, registers: &mut Registers) -> u16 {
-    let value = self.read_short(registers.sp);
-    registers.sp += 2;
+  pub fn read_short_from_stack(&self, cpu: &mut Cpu) -> u16 {
+    let sp = cpu.registers.sp;
+    let value = self.read_short(cpu, sp);
+    cpu.registers.sp += 2;
     value
   }
 
-  pub fn write_byte(&mut self, address: u16, value: u8) {
+  pub fn write_byte(&mut self, cpu: &mut Cpu, address: u16, value: u8) {
     if address >= 0xA000 && address <= 0xBFFF {
       self.sram[(address - 0xA000) as usize] = value;
     }
@@ -144,13 +145,13 @@ impl Memory {
     // TODO: Add interrupt
   }
 
-  pub fn write_short(&mut self, address: u16, value: u16) {
-    self.write_byte(address, (value & 0x00FF) as u8);
-    self.write_byte(address + 1, ((value & 0xFF00) >> 8) as u8);
+  pub fn write_short(&mut self, cpu: &mut Cpu, address: u16, value: u16) {
+    self.write_byte(cpu, address, (value & 0x00FF) as u8);
+    self.write_byte(cpu, address + 1, ((value & 0xFF00) >> 8) as u8);
   }
 
-  pub fn write_short_to_stack(&mut self, registers: &mut Registers, value: u16) {
-    registers.sp -= 2;
-    self.write_short(registers.sp, value);
+  pub fn write_short_to_stack(&mut self, cpu: &mut Cpu, value: u16) {
+    cpu.registers.sp -= 2;
+    self.write_short(cpu, cpu.registers.sp, value);
   }
 }
