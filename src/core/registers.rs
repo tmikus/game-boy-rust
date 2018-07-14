@@ -1,5 +1,9 @@
+use {
+  std::u16,
+};
+
 pub union AFRegister {
-  pub a: i8,
+  pub a: u8,
   // This is the flag register. Flag register consists of following bits:
   // 7 6 5 4 3 2 1 0
   // Z N H C 0 0 0 0
@@ -13,26 +17,26 @@ pub union AFRegister {
   //
   // C - Carry flag: This bit is set if a carry occurred from the last math operation or if
   //     register A is the smaller value when executing the CP instruction.
-  pub f: i8,
-  pub af: i16,
+  pub f: u8,
+  pub af: u16,
 }
 
 pub union BCRegister {
-  pub b: i8,
-  pub c: i8,
-  pub bc: i16,
+  pub b: u8,
+  pub c: u8,
+  pub bc: u16,
 }
 
 pub union DERegister {
-  pub d: i8,
-  pub e: i8,
-  pub de: i16,
+  pub d: u8,
+  pub e: u8,
+  pub de: u16,
 }
 
 pub union HLRegister {
-  pub h: i8,
-  pub l: i8,
-  pub hl: i16,
+  pub h: u8,
+  pub l: u8,
+  pub hl: u16,
 }
 
 pub struct Registers {
@@ -40,8 +44,8 @@ pub struct Registers {
   pub bc: BCRegister,
   pub de: DERegister,
   pub hl: HLRegister,
-  pub sp: i16,
-  pub pc: i16,
+  pub sp: u16,
+  pub pc: u16,
 }
 
 impl Registers {

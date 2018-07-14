@@ -1,6 +1,7 @@
 [package]
-name = "game-boy-rust"
+name = "game_boy_rust"
 version = "0.1.0"
 authors = ["Tomasz Mikus <mikus.tomasz@gmail.com>"]
 
 [dependencies]
+rand = "0.5.4"
