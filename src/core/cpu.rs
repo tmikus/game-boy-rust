@@ -1,27 +1,22 @@
 use {
   core::{
-    memory::Memory,
+    emulator::Emulator,
     instruction::Instruction,
-    interrupt::Interrupt,
-    registers::Registers,
   },
+  std::ptr,
 };
 
 pub struct Cpu {
+  pub emulator: *mut Emulator,
   pub instructions: [Instruction; 1],
-  pub interrupt: Interrupt,
-  pub memory: Memory,
-  pub registers: Registers,
   pub ticks: u64,
 }
 
 impl Cpu {
   pub fn new() -> Cpu {
     Cpu {
+      emulator: ptr::null_mut(),
       instructions: get_instructions(),
-      interrupt: Interrupt::new(),
-      memory: Memory::new(),
-      registers: Registers::new(),
       ticks: 0,
     }
   }

@@ -4,13 +4,13 @@ mod core;
 
 use {
   core::{
-    cpu::Cpu,
+    emulator::Emulator,
     keys::Keys,
   },
 };
 
 fn main() {
-  let mut cpu = Cpu::new();
+  let mut emulator = Emulator::new();
   let mut keys = Keys::new();
   keys.value = 0xF0;
   println!("Combined Keys: {:#08b}", keys.value);

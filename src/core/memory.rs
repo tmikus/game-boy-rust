@@ -1,9 +1,12 @@
 use {
   core::{
-    cpu::Cpu,
+    emulator::Emulator,
+    interrupt::Interrupt,
+    registers::Registers,
     keys::Keys,
   },
   rand,
+  std::ptr,
 };
 
 const CART_SIZE: usize = 0x8000;
@@ -15,6 +18,7 @@ const WRAM_SIZE: usize = 0x2000;
 const HRAM_SIZE: usize = 0x80;
 
 pub struct Memory {
+  pub emulator: *mut Emulator,
   // TODO: Refactor these to use actual devices once starting to get stuff displayed
   cart: [u8; CART_SIZE],
   sram: [u8; SRAM_SIZE],
@@ -29,6 +33,7 @@ pub struct Memory {
 impl Memory {
   pub fn new() -> Memory {
     Memory {
+      emulator: ptr::null_mut(),
       cart: [0; CART_SIZE],
       sram: [0; SRAM_SIZE],
       // TODO Is this correct?
@@ -58,7 +63,7 @@ impl Memory {
     }
   }
 
-  pub fn read_byte(&self, cpu: &Cpu, address: u16) -> u8 {
+  pub fn read_byte(&self, address: u16) -> u8 {
     if address <= 0x7FFF {
       return self.cart[address as usize];
     }
@@ -104,18 +109,18 @@ impl Memory {
     return 0;
   }
 
-  pub fn read_short(&self, cpu: &Cpu, address: u16) -> u16 {
-    self.read_byte(cpu, address) as u16 | (self.read_byte(cpu, address + 1) as u16) << 8
+  pub fn read_short(&self, address: u16) -> u16 {
+    self.read_byte(address) as u16 | (self.read_byte(address + 1) as u16) << 8
   }
 
-  pub fn read_short_from_stack(&self, cpu: &mut Cpu) -> u16 {
-    let sp = cpu.registers.sp;
-    let value = self.read_short(cpu, sp);
-    cpu.registers.sp += 2;
+  pub fn read_short_from_stack(&self) -> u16 {
+    let emulator = unsafe { &mut *self.emulator };
+    let value = self.read_short(emulator.registers.sp);
+    emulator.registers.sp += 2;
     value
   }
 
-  pub fn write_byte(&mut self, cpu: &mut Cpu, address: u16, value: u8) {
+  pub fn write_byte(&mut self, address: u16, value: u8) {
     if address >= 0xA000 && address <= 0xBFFF {
       self.sram[(address - 0xA000) as usize] = value;
     }
@@ -145,13 +150,14 @@ impl Memory {
     // TODO: Add interrupt
   }
 
-  pub fn write_short(&mut self, cpu: &mut Cpu, address: u16, value: u16) {
-    self.write_byte(cpu, address, (value & 0x00FF) as u8);
-    self.write_byte(cpu, address + 1, ((value & 0xFF00) >> 8) as u8);
+  pub fn write_short(&mut self, address: u16, value: u16) {
+    self.write_byte(address, (value & 0x00FF) as u8);
+    self.write_byte(address + 1, ((value & 0xFF00) >> 8) as u8);
   }
 
-  pub fn write_short_to_stack(&mut self, cpu: &mut Cpu, value: u16) {
-    cpu.registers.sp -= 2;
-    self.write_short(cpu, cpu.registers.sp, value);
+  pub fn write_short_to_stack(&mut self, value: u16) {
+    let emulator = unsafe { &mut *self.emulator };
+    emulator.registers.sp -= 2;
+    self.write_short(emulator.registers.sp, value);
   }
 }
