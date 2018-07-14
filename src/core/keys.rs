@@ -4,7 +4,7 @@ pub struct Keys {
 
 impl Keys {
   pub fn new() -> Keys {
-    Keys { value: 0 }
+    Keys { value: 0xFF }
   }
 
   pub fn get_keys_1(&self) -> u8 {
@@ -13,6 +13,10 @@ impl Keys {
 
   pub fn get_keys_2(&self) -> u8 {
     self.value & 0x0F
+  }
+
+  pub fn reset(&mut self) {
+    self.value = 0xFF;
   }
 
   pub fn set_keys_1(&mut self, value: u8) {

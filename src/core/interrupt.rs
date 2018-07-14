@@ -20,10 +20,16 @@ impl Interrupt {
   pub fn new() -> Interrupt {
     Interrupt {
       emulator: ptr::null_mut(),
-      master: 0,
+      master: 1,
       enable: 0,
       flags: 0,
     }
+  }
+
+  pub fn reset(&mut self) {
+    self.master = 1;
+    self.enable = 0;
+    self.flags = 0;
   }
 
   pub fn step(&mut self) {

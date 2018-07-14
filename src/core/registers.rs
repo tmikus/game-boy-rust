@@ -59,4 +59,17 @@ impl Registers {
       pc: 0x100,
     }
   }
+
+  pub fn reset(&mut self) {
+    self.af.a = 0x01;
+    self.af.f = 0xb0;
+    self.bc.b = 0x00;
+    self.bc.c = 0x13;
+    self.de.d = 0x00;
+    self.de.e = 0xd8;
+    self.hl.h = 0x01;
+    self.hl.l = 0x4d;
+    self.sp = 0xFFFE;
+    self.pc = 0x100;
+  }
 }

@@ -1,5 +1,6 @@
 use {
   core::{
+    colour::Colour,
     cpu::Cpu,
     interrupt::Interrupt,
     memory::Memory,
@@ -12,6 +13,7 @@ pub struct Emulator {
   pub cpu: Cpu,
   pub interrupt: Interrupt,
   pub memory: Memory,
+  pub palette: [Colour; 4],
   pub registers: Registers,
 }
 
@@ -21,11 +23,22 @@ impl Emulator {
       cpu: Cpu::new(),
       interrupt: Interrupt::new(),
       memory: Memory::new(),
+      palette: [
+        // TODO: Fix this
+        Colour::new(0, 0, 0),
+        Colour::new(0, 0, 0),
+        Colour::new(0, 0, 0),
+        Colour::new(0, 0, 0),
+      ],
       registers: Registers::new(),
     };
     emulator.cpu.emulator = &mut emulator;
     emulator.interrupt.emulator = &mut emulator;
     emulator.memory.emulator = &mut emulator;
     emulator
+  }
+
+  pub fn reset(&mut self) {
+    self.memory.reset();
   }
 }

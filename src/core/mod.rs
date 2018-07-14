@@ -1,5 +1,7 @@
+pub mod colour;
 pub mod cpu;
 pub mod emulator;
+pub mod gpu;
 pub mod instruction;
 pub mod interrupt;
 pub mod keys;
