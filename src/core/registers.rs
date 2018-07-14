@@ -2,6 +2,11 @@ use {
   std::u16,
 };
 
+pub const FLAG_ZERO: u8 = 1 << 7;
+pub const FLAG_NEGATIVE: u8 = 1 << 6;
+pub const FLAG_HALF_CARRY: u8 = 1 << 5;
+pub const FLAG_CARRY: u8 = 1 << 4;
+
 pub struct Registers {
   pub a: u8,
   // This is the flag register. Flag register consists of following bits:
@@ -78,5 +83,17 @@ impl Registers {
   pub fn set_hl(&mut self, value: u16) {
     self.h = ((value & 0xFF00) >> 8) as u8;
     self.l = (value & 0x00FF) as u8;
+  }
+
+  pub fn clear_flag(&mut self, flag: u8) {
+    self.f &= !flag;
+  }
+
+  pub fn is_flag_set(&self, flag: u8) -> bool {
+    (self.f & flag) != 0
+  }
+
+  pub fn set_flag(&mut self, flag: u8) {
+    self.f |= flag;
   }
 }
