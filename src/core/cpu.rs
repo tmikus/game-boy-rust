@@ -15,6 +15,7 @@ use {
 pub struct Cpu {
   pub emulator: *mut Emulator,
   pub instructions: [Instruction; 3],
+  pub stopped: bool,
   pub ticks: u64,
 }
 
@@ -23,6 +24,7 @@ impl Cpu {
     Cpu {
       emulator: ptr::null_mut(),
       instructions: get_instructions(),
+      stopped: false,
       ticks: 0,
     }
   }
@@ -121,6 +123,164 @@ fn add_hl_bc(emulator: &mut Emulator) {
   let bc = emulator.registers.get_bc();
   let result = add_short(emulator, hl, bc);
   emulator.registers.set_hl(result);
+}
+
+// 0x0A
+fn ld_a_bcp(emulator: &mut Emulator) {
+  emulator.registers.a = emulator.memory.read_byte(emulator.registers.get_bc());
+}
+
+// 0x0B
+fn dec_bc(emulator: &mut Emulator) {
+  let bc = emulator.registers.get_bc();
+  emulator.registers.set_bc(bc - 1);
+}
+
+// 0x0C
+fn inc_c(emulator: &mut Emulator) {
+  let c = emulator.registers.c;
+  emulator.registers.c = increment(emulator, c);
+}
+
+// 0x0D
+fn dec_c(emulator: &mut Emulator) {
+  let c = emulator.registers.c;
+  emulator.registers.c = decrement(emulator, c);
+}
+
+// 0x0E
+fn ld_c_n(emulator: &mut Emulator) {
+  emulator.registers.c = emulator.cpu.read_next_byte();
+}
+
+// 0x0F
+fn rrca(emulator: &mut Emulator) {
+  let carry = emulator.registers.a & 0x01;
+  if carry != 0 {
+    emulator.registers.set_flag(FLAG_CARRY);
+  } else {
+    emulator.registers.clear_flag(FLAG_CARRY);
+  }
+  emulator.registers.a >>= 1;
+  if carry != 0 {
+    emulator.registers.a |= 0x80;
+  }
+  emulator.registers.clear_flag(FLAG_NEGATIVE | FLAG_ZERO | FLAG_HALF_CARRY);
+}
+
+// 0x10
+fn stop(emulator: &mut Emulator) {
+  emulator.cpu.read_next_byte();
+  emulator.cpu.stopped = true;
+}
+
+// 0x11
+fn ld_de_nn(emulator: &mut Emulator) {
+  emulator.registers.set_de(emulator.cpu.read_next_short());
+}
+
+// 0x12
+fn ld_dep_a(emulator: &mut Emulator) {
+  emulator.memory.write_byte(emulator.registers.get_de(), emulator.registers.a);
+}
+
+// 0x13
+fn inc_de(emulator: &mut Emulator) {
+  let de = emulator.registers.get_de();
+  emulator.registers.set_de(de + 1);
+}
+
+// 0x14
+fn inc_d(emulator: &mut Emulator) {
+  let d = emulator.registers.d;
+  emulator.registers.d = increment(emulator, d);
+}
+
+// 0x15
+fn dec_d(emulator: &mut Emulator) {
+  let d = emulator.registers.d;
+  emulator.registers.d = decrement(emulator, d);
+}
+
+// 0x16
+fn ld_d_n(emulator: &mut Emulator) {
+  emulator.registers.d = emulator.cpu.read_next_byte();
+}
+
+// 0x17
+fn rla(emulator: &mut Emulator) {
+  let is_carry_set = emulator.registers.is_flag_set(FLAG_CARRY);
+  if emulator.registers.a & 0x80 != 0 {
+    emulator.registers.set_flag(FLAG_CARRY);
+  } else {
+    emulator.registers.clear_flag(FLAG_CARRY);
+  }
+  emulator.registers.a <<= 1;
+  if is_carry_set {
+    emulator.registers.a += 1;
+  }
+  emulator.registers.clear_flag(FLAG_NEGATIVE | FLAG_ZERO | FLAG_HALF_CARRY);
+}
+
+// 0x18
+fn jr_n(emulator: &mut Emulator) {
+  let pc = emulator.registers.pc as i16;
+  let result = pc + emulator.cpu.read_next_byte() as i16;
+  emulator.registers.pc = result as u16;
+  // TODO: Debug JUMP
+}
+
+// 0x19
+fn add_hl_de(emulator: &mut Emulator) {
+  let hl = emulator.registers.get_hl();
+  let de = emulator.registers.get_de();
+  let result = add_short(emulator, hl, de);
+  emulator.registers.set_hl(result);
+}
+
+// 0x1A
+fn ld_a_dep(emulator: &mut Emulator) {
+  emulator.registers.a = emulator.memory.read_byte(emulator.registers.get_de());
+}
+
+// 0x1B
+fn dec_de(emulator: &mut Emulator) {
+  let de = emulator.registers.get_de();
+  emulator.registers.set_de(de - 1);
+}
+
+// 0x1C
+fn inc_e(emulator: &mut Emulator) {
+  let e = emulator.registers.e;
+  emulator.registers.e = increment(emulator, e);
+}
+
+// 0x1D
+fn dec_e(emulator: &mut Emulator) {
+  let e = emulator.registers.e;
+  emulator.registers.e = decrement(emulator, e);
+}
+
+// 0x1E
+fn ld_e_n(emulator: &mut Emulator) {
+  emulator.registers.e = emulator.cpu.read_next_byte();
+}
+
+// 0x20
+fn rra(emulator: &mut Emulator) {
+  let carry = if emulator.registers.is_flag_set(FLAG_CARRY) {
+    1 << 7
+  } else {
+    0
+  };
+  if emulator.registers.a & 0x01 != 0 {
+    emulator.registers.set_flag(FLAG_CARRY);
+  } else {
+    emulator.registers.clear_flag(FLAG_CARRY);
+  }
+  emulator.registers.a >>= 1;
+  emulator.registers.a += carry;
+  emulator.registers.clear_flag(FLAG_NEGATIVE | FLAG_ZERO | FLAG_HALF_CARRY);
 }
 
 fn decrement(emulator: &mut Emulator, value: u8) -> u8 {
