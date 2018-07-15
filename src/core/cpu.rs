@@ -193,3 +193,120 @@ fn add_short(emulator: &mut Emulator, left: u16, right: u16) -> u16 {
   emulator.registers.clear_flag(FLAG_NEGATIVE);
   clamped_result
 }
+
+fn subtract(emulator: &mut Emulator, value: u8) {
+  emulator.registers.set_flag(FLAG_NEGATIVE);
+  if value > emulator.registers.a {
+    emulator.registers.set_flag(FLAG_CARRY);
+  } else {
+    emulator.registers.clear_flag(FLAG_CARRY);
+  }
+  if value & 0x0F > emulator.registers.a & 0x0F {
+    emulator.registers.set_flag(FLAG_HALF_CARRY);
+  } else {
+    emulator.registers.clear_flag(FLAG_HALF_CARRY);
+  }
+  emulator.registers.a -= value;
+
+}
+
+fn add_with_carry(emulator: &mut Emulator, value: u8) {
+  let value = if emulator.registers.is_flag_set(FLAG_CARRY) {
+    value + 1
+  } else {
+    value
+  };
+  let result = emulator.registers.a as u16 + value as u16;
+  if (result & 0xFF00) != 0 {
+    emulator.registers.set_flag(FLAG_CARRY);
+  } else {
+    emulator.registers.clear_flag(FLAG_CARRY);
+  }
+  if value == emulator.registers.a {
+    emulator.registers.set_flag(FLAG_ZERO);
+  } else {
+    emulator.registers.clear_flag(FLAG_ZERO);
+  }
+  if (value & 0x0F) + (emulator.registers.a & 0x0F) > 0x0F {
+    emulator.registers.set_flag(FLAG_HALF_CARRY);
+  } else {
+    emulator.registers.clear_flag(FLAG_HALF_CARRY);
+  }
+  emulator.registers.set_flag(FLAG_NEGATIVE);
+  emulator.registers.a = (result & 0xFF) as u8;
+}
+
+fn subtract_with_carry(emulator: &mut Emulator, value: u8) {
+  let value = if emulator.registers.is_flag_set(FLAG_CARRY) {
+    value + 1
+  } else {
+    value
+  };
+  emulator.registers.set_flag(FLAG_NEGATIVE);
+  if value > emulator.registers.a {
+    emulator.registers.set_flag(FLAG_CARRY);
+  } else {
+    emulator.registers.clear_flag(FLAG_CARRY);
+  }
+  if value == emulator.registers.a {
+    emulator.registers.set_flag(FLAG_ZERO);
+  } else {
+    emulator.registers.clear_flag(FLAG_ZERO);
+  }
+  if value & 0x0F > emulator.registers.a & 0x0F {
+    emulator.registers.set_flag(FLAG_HALF_CARRY);
+  } else {
+    emulator.registers.clear_flag(FLAG_HALF_CARRY);
+  }
+  emulator.registers.a -= value;
+}
+
+fn and(emulator: &mut Emulator, value: u8) {
+  emulator.registers.a &= value;
+  if emulator.registers.a != 0 {
+    emulator.registers.clear_flag(FLAG_ZERO);
+  } else {
+    emulator.registers.set_flag(FLAG_ZERO);
+  }
+  emulator.registers.clear_flag(FLAG_CARRY | FLAG_NEGATIVE);
+  emulator.registers.set_flag(FLAG_HALF_CARRY);
+}
+
+fn or(emulator: &mut Emulator, value: u8) {
+  emulator.registers.a |= value;
+  if emulator.registers.a != 0 {
+    emulator.registers.clear_flag(FLAG_ZERO);
+  } else {
+    emulator.registers.set_flag(FLAG_ZERO);
+  }
+  emulator.registers.clear_flag(FLAG_CARRY | FLAG_NEGATIVE | FLAG_HALF_CARRY);
+}
+
+fn xor(emulator: &mut Emulator, value: u8) {
+  emulator.registers.a ^= value;
+  if emulator.registers.a != 0 {
+    emulator.registers.clear_flag(FLAG_ZERO);
+  } else {
+    emulator.registers.set_flag(FLAG_ZERO);
+  }
+  emulator.registers.clear_flag(FLAG_CARRY | FLAG_NEGATIVE | FLAG_HALF_CARRY);
+}
+
+fn compare(emulator: &mut Emulator, value: u8) {
+  if emulator.registers.a == value {
+    emulator.registers.set_flag(FLAG_ZERO);
+  } else {
+    emulator.registers.clear_flag(FLAG_ZERO);
+  }
+  if value > emulator.registers.a {
+    emulator.registers.set_flag(FLAG_CARRY);
+  } else {
+    emulator.registers.clear_flag(FLAG_CARRY);
+  }
+  if value & 0x0F > emulator.registers.a & 0x0F {
+    emulator.registers.set_flag(FLAG_HALF_CARRY);
+  } else {
+    emulator.registers.clear_flag(FLAG_HALF_CARRY);
+  }
+  emulator.registers.set_flag(FLAG_NEGATIVE);
+}
