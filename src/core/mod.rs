@@ -1,5 +1,6 @@
 pub mod colour;
 pub mod cpu;
+pub mod cpu_cb;
 pub mod emulator;
 pub mod gpu;
 pub mod instruction;

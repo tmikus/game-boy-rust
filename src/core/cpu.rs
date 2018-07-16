@@ -1,5 +1,6 @@
 use {
   core::{
+    cpu_cb::cpu_cb_n,
     emulator::Emulator,
     instruction::Instruction,
     registers::{
@@ -14,7 +15,7 @@ use {
 
 pub struct Cpu {
   pub emulator: *mut Emulator,
-  pub instructions: [Instruction; 3],
+  pub instructions: [Instruction; 256],
   pub stopped: bool,
   pub ticks: u64,
 }
@@ -50,14 +51,535 @@ impl Cpu {
 
 }
 
-fn get_instructions() -> [Instruction; 3] {
+fn get_instructions() -> [Instruction; 256] {
   [
     // 0x00
     Instruction::new("NOP", 2, nop),
     // 0x01
     Instruction::new("LD BC, {:06X}", 6, ld_bc_nn),
     // 0x02
-    Instruction::new("", 4, ld_bcp_a),
+    Instruction::new("LD (BC)", 4, ld_bcp_a),
+    // 0x03
+    Instruction::new("INC BC", 4, inc_bc),
+    // 0x04
+    Instruction::new("INC B", 2, inc_b),
+    // 0x05
+    Instruction::new("DED B", 2, dec_b),
+    // 0x06
+    Instruction::new("LD B, {:04X}", 4, ld_b_n),
+    // 0x07
+    Instruction::new("RLCA", 4, rlca),
+    // 0x08
+    Instruction::new("LD ({:06X}), SP", 10, ld_nnp_sp),
+    // 0x09
+    Instruction::new("ADD HL, BC", 4, add_hl_bc),
+    // 0x0A
+    Instruction::new("LD A, (BC)", 4, ld_a_bcp),
+    // 0x0B
+    Instruction::new("DEC BC", 4, dec_bc),
+    // 0x0C
+    Instruction::new("INC C", 2, inc_c),
+    // 0x0D
+    Instruction::new("DEC C", 2, dec_c),
+    // 0x0E
+    Instruction::new("LD C, {:06X}", 4, ld_c_n),
+    // 0x0F
+    Instruction::new("RRCA", 4, rrca),
+
+    // 0x10
+    Instruction::new("STOP", 2, stop),
+    // 0x11
+    Instruction::new("LD DE, {:06X}", 6, ld_de_nn),
+    // 0x12
+    Instruction::new("LD (DE), A", 4, ld_dep_a),
+    // 0x13
+    Instruction::new("INC DE", 4, inc_de),
+    // 0x14
+    Instruction::new("INC D", 2, inc_d),
+    // 0x15
+    Instruction::new("DEC D", 2, dec_d),
+    // 0x16
+    Instruction::new("LD D, {:04X}", 4, ld_d_n),
+    // 0x17
+    Instruction::new("RLA", 4, rla),
+    // 0x18
+    Instruction::new("JR {:04X}", 4, jr_n),
+    // 0x19
+    Instruction::new("ADD HL, DE", 4, add_hl_de),
+    // 0x1A
+    Instruction::new("LD A, (DE)", 4, ld_a_dep),
+    // 0x1B
+    Instruction::new("DEC DE", 4, dec_de),
+    // 0x1C
+    Instruction::new("INC E", 2, inc_e),
+    // 0x1D
+    Instruction::new("DEC E", 2, dec_e),
+    // 0x1E
+    Instruction::new("LD E, {:04X}", 4, ld_e_n),
+    // 0x1F
+    Instruction::new("RRA", 4, rra),
+
+    // 0x20
+    Instruction::new("JR NZ, {:04X}", 0, jr_nz_n),
+    // 0x21
+    Instruction::new("LD HL, {:06X}", 6, ld_hl_nn),
+    // 0x22
+    Instruction::new("LDI (HL), A", 4, ldi_hlp_a),
+    // 0x23
+    Instruction::new("INC HL", 4, inc_hl),
+    // 0x24
+    Instruction::new("INC H", 2, inc_h),
+    // 0x25
+    Instruction::new("DEC H", 2, dec_h),
+    // 0x26
+    Instruction::new("LD H, {:04X}", 4, ld_h_n),
+    // 0x27
+    Instruction::new("DAA", 2, daa),
+    // 0x28
+    Instruction::new("JR Z, {:04X}", 0, jr_z_n),
+    // 0x29
+    Instruction::new("ADD HL, HL", 4, add_hl_hl),
+    // 0x2A
+    Instruction::new("LDI A, (HL)", 4, ldi_a_hlp),
+    // 0x2B
+    Instruction::new("DEC HL", 4, dec_hl),
+    // 0x2C
+    Instruction::new("INC L", 2, inc_l),
+    // 0x2D
+    Instruction::new("DEC L", 2, dec_l),
+    // 0x2E
+    Instruction::new("LD L, {:04X}", 4, ld_l_n),
+    // 0x2F
+    Instruction::new("CPL", 2, cpl),
+
+    // 0x30
+    Instruction::new("JR NC, {:04X}", 4, jr_nc_n),
+    // 0x31
+    Instruction::new("LD SP, {:08X}", 6, ld_sp_nn),
+    // 0x32
+    Instruction::new("LDD (HL), A", 4, ldd_hlp_a),
+    // 0x33
+    Instruction::new("INC SP", 4, inc_sp),
+    // 0x34
+    Instruction::new("INC (HL)", 6, inc_hlp),
+    // 0x35
+    Instruction::new("DEC (HL)", 6, dec_hlp),
+    // 0x36
+    Instruction::new("LD (HL), {:04X}", 6, ld_hlp_n),
+    // 0x37
+    Instruction::new("SCF", 2, scf),
+    // 0x38
+    Instruction::new("JR C, {:04X}", 0, jr_c_n),
+    // 0x39
+    Instruction::new("ADD HL, SP", 4, add_hl_sp),
+    // 0x3A
+    Instruction::new("LDD A, (HL)", 4, ldd_a_hlp),
+    // 0x3B
+    Instruction::new("DEC SP", 4, dec_sp),
+    // 0x3C
+    Instruction::new("INC A", 2, inc_a),
+    // 0x3D
+    Instruction::new("DEC A", 2, dec_a),
+    // 0x3E
+    Instruction::new("LD A, {:04X}", 4, ld_a_n),
+    // 0x3F
+    Instruction::new("CCF", 2, ccf),
+
+    // 0x40
+    Instruction::new("LD B, B", 2, nop),
+    // 0x41
+    Instruction::new("LD B, C", 2, ld_b_c),
+    // 0x42
+    Instruction::new("LD B, D", 2, ld_b_d),
+    // 0x43
+    Instruction::new("LD B, E", 2, ld_b_e),
+    // 0x44
+    Instruction::new("LD B, H", 2, ld_b_h),
+    // 0x45
+    Instruction::new("LD B, L", 2, ld_b_l),
+    // 0x46
+    Instruction::new("LD B, (HL)", 4, ld_b_hlp),
+    // 0x47
+    Instruction::new("LD B, A", 2, ld_b_a),
+    // 0x48
+    Instruction::new("LD C, B", 2, ld_c_b),
+    // 0x49
+    Instruction::new("LD C, C", 2, nop),
+    // 0x4A
+    Instruction::new("LD C, D", 2, ld_c_d),
+    // 0x4B
+    Instruction::new("LD C, E", 2, ld_c_e),
+    // 0x4C
+    Instruction::new("LD C, H", 2, ld_c_h),
+    // 0x4D
+    Instruction::new("LD C, L", 2, ld_c_l),
+    // 0x4E
+    Instruction::new("LD C, (HL)", 4, ld_c_hlp),
+    // 0x4F
+    Instruction::new("LD C, A", 2, ld_c_a),
+
+    // 0x50
+    Instruction::new("LD D, B", 2, ld_d_b),
+    // 0x51
+    Instruction::new("LD D, C", 2, ld_d_c),
+    // 0x52
+    Instruction::new("LD D, D", 2, nop),
+    // 0x53
+    Instruction::new("LD D, E", 2, ld_d_e),
+    // 0x54
+    Instruction::new("LD D, H", 2, ld_d_h),
+    // 0x55
+    Instruction::new("LD D, L", 2, ld_d_l),
+    // 0x56
+    Instruction::new("LD D, (HL)", 4, ld_d_hlp),
+    // 0x57
+    Instruction::new("LD D, A", 2, ld_d_a),
+    // 0x58
+    Instruction::new("LD E, B", 2, ld_e_b),
+    // 0x59
+    Instruction::new("LD E, C", 2, ld_e_c),
+    // 0x5A
+    Instruction::new("LD E, D", 2, ld_e_d),
+    // 0x5B
+    Instruction::new("LD E, E", 2, nop),
+    // 0x5C
+    Instruction::new("LD E, H", 2, ld_e_h),
+    // 0x5D
+    Instruction::new("LD E, L", 2, ld_e_l),
+    // 0x5E
+    Instruction::new("LD E, (HL)", 4, ld_e_hlp),
+    // 0x5F
+    Instruction::new("LD E, A", 2, ld_e_a),
+
+    // 0x60
+    Instruction::new("LD H, B", 2, ld_h_b),
+    // 0x61
+    Instruction::new("LD H, C", 2, ld_h_c),
+    // 0x62
+    Instruction::new("LD H, D", 2, ld_h_d),
+    // 0x63
+    Instruction::new("LD H, E", 2, ld_h_e),
+    // 0x64
+    Instruction::new("LD H, H", 2, nop),
+    // 0x65
+    Instruction::new("LD H, L", 2, ld_h_l),
+    // 0x66
+    Instruction::new("LD H, (HL)", 4, ld_h_hlp),
+    // 0x67
+    Instruction::new("LD H, A", 2, ld_h_a),
+    // 0x68
+    Instruction::new("LD L, B", 2, ld_l_b),
+    // 0x69
+    Instruction::new("LD L, C", 2, ld_l_c),
+    // 0x6A
+    Instruction::new("LD L, D", 2, ld_l_d),
+    // 0x6B
+    Instruction::new("LD L, E", 2, ld_l_e),
+    // 0x6C
+    Instruction::new("LD L, H", 2, ld_l_h),
+    // 0x6D
+    Instruction::new("LD L, L", 2, nop),
+    // 0x6E
+    Instruction::new("LD L, (HL)", 4, ld_l_hlp),
+    // 0x6F
+    Instruction::new("LD L, A", 2, ld_l_a),
+
+    // 0x70
+    Instruction::new("LD (HL), B", 4, ld_hlp_b),
+    // 0x71
+    Instruction::new("LD (HL), C", 4, ld_hlp_c),
+    // 0x72
+    Instruction::new("LD (HL), D", 4, ld_hlp_d),
+    // 0x73
+    Instruction::new("LD (HL), E", 4, ld_hlp_e),
+    // 0x74
+    Instruction::new("LD (HL), H", 4, ld_hlp_h),
+    // 0x75
+    Instruction::new("LD (HL), L", 4, ld_hlp_l),
+    // 0x76
+    Instruction::new("HALT", 2, halt),
+    // 0x77
+    Instruction::new("LD (HL), A", 4, ld_hlp_a),
+    // 0x78
+    Instruction::new("LD A, B", 2, ld_a_b),
+    // 0x79
+    Instruction::new("LD A, C", 2, ld_a_c),
+    // 0x7A
+    Instruction::new("LD A, D", 2, ld_a_d),
+    // 0x7B
+    Instruction::new("LD A, E", 2, ld_a_e),
+    // 0x7C
+    Instruction::new("LD A, H", 2, ld_a_h),
+    // 0x7D
+    Instruction::new("LD A, L", 2, ld_a_l),
+    // 0x7E
+    Instruction::new("LD A, (HL)", 4, ld_a_hlp),
+    // 0x7F
+    Instruction::new("LD A, A", 2, nop),
+
+    // 0x80
+    Instruction::new("ADD A, B", 2, add_a_b),
+    // 0x81
+    Instruction::new("ADD A, C", 2, add_a_c),
+    // 0x82
+    Instruction::new("ADD A, D", 2, add_a_d),
+    // 0x83
+    Instruction::new("ADD A, E", 2, add_a_e),
+    // 0x84
+    Instruction::new("ADD A, H", 2, add_a_h),
+    // 0x85
+    Instruction::new("ADD A, L", 2, add_a_l),
+    // 0x86
+    Instruction::new("ADD A, (HL)", 4, add_a_hlp),
+    // 0x87
+    Instruction::new("ADD A", 2, add_a_a),
+    // 0x88
+    Instruction::new("ADC B", 2, adc_b),
+    // 0x89
+    Instruction::new("ADC C", 2, adc_c),
+    // 0x8A
+    Instruction::new("ADC D", 2, adc_d),
+    // 0x8B
+    Instruction::new("ADC E", 2, adc_e),
+    // 0x8C
+    Instruction::new("ADC H", 2, adc_h),
+    // 0x8D
+    Instruction::new("ADC L", 2, adc_l),
+    // 0x8E
+    Instruction::new("ADC (HL)", 4, adc_hlp),
+    // 0x8F
+    Instruction::new("ADC A", 2, adc_a),
+
+    // 0x90
+    Instruction::new("SUB B", 2, sub_b),
+    // 0x91
+    Instruction::new("SUB C", 2, sub_c),
+    // 0x92
+    Instruction::new("SUB D", 2, sub_d),
+    // 0x93
+    Instruction::new("SUB E", 2, sub_e),
+    // 0x94
+    Instruction::new("SUB H", 2, sub_h),
+    // 0x95
+    Instruction::new("SUB L", 2, sub_l),
+    // 0x96
+    Instruction::new("SUB (HL)", 4, sub_hlp),
+    // 0x97
+    Instruction::new("SUB A", 2, sub_a),
+    // 0x98
+    Instruction::new("SBC B", 2, sbc_b),
+    // 0x99
+    Instruction::new("SBC C", 2, sbc_c),
+    // 0x9A
+    Instruction::new("SBC D", 2, sbc_d),
+    // 0x9B
+    Instruction::new("SBC E", 2, sbc_e),
+    // 0x9C
+    Instruction::new("SBC H", 2, sbc_h),
+    // 0x9D
+    Instruction::new("SBC L", 2, sbc_l),
+    // 0x9E
+    Instruction::new("SBC (HL)", 4, sbc_hlp),
+    // 0x9F
+    Instruction::new("SBC A", 2, sbc_a),
+
+    // 0xA0
+    Instruction::new("AND B", 2, and_b),
+    // 0xA1
+    Instruction::new("AND C", 2, and_c),
+    // 0xA2
+    Instruction::new("AND D", 2, and_d),
+    // 0xA3
+    Instruction::new("AND E", 2, and_e),
+    // 0xA4
+    Instruction::new("AND H", 2, and_h),
+    // 0xA5
+    Instruction::new("AND L", 2, and_l),
+    // 0xA6
+    Instruction::new("AND (HL)", 4, and_hlp),
+    // 0xA7
+    Instruction::new("AND A", 2, and_a),
+    // 0xA8
+    Instruction::new("XOR B", 2, xor_b),
+    // 0xA9
+    Instruction::new("XOR C", 2, xor_c),
+    // 0xAA
+    Instruction::new("XOR D", 2, xor_d),
+    // 0xAB
+    Instruction::new("XOR E", 2, xor_e),
+    // 0xAC
+    Instruction::new("XOR H", 2, xor_h),
+    // 0xAD
+    Instruction::new("XOR L", 2, xor_l),
+    // 0xAE
+    Instruction::new("XOR (HL)", 4, xor_hlp),
+    // 0xAF
+    Instruction::new("XOR A", 2, xor_a),
+
+    // 0xB0
+    Instruction::new("OR B", 2, or_b),
+    // 0xB1
+    Instruction::new("OR C", 2, or_c),
+    // 0xB2
+    Instruction::new("OR D", 2, or_d),
+    // 0xB3
+    Instruction::new("OR E", 2, or_e),
+    // 0xB4
+    Instruction::new("OR H", 2, or_h),
+    // 0xB5
+    Instruction::new("OR L", 2, or_l),
+    // 0xB6
+    Instruction::new("OR (HL)", 4, or_hlp),
+    // 0xB7
+    Instruction::new("OR A", 2, or_a),
+    // 0xB8
+    Instruction::new("CP B", 2, cp_b),
+    // 0xB9
+    Instruction::new("CP C", 2, cp_c),
+    // 0xBA
+    Instruction::new("CP D", 2, cp_d),
+    // 0xBB
+    Instruction::new("CP E", 2, cp_e),
+    // 0xBC
+    Instruction::new("CP H", 2, cp_h),
+    // 0xBD
+    Instruction::new("CP L", 2, cp_l),
+    // 0xBE
+    Instruction::new("CP (HL)", 4, cp_hlp),
+    // 0xBF
+    Instruction::new("CP A", 2, cp_a),
+
+    // 0xC0
+    Instruction::new("RET NZ", 0, ret_nz),
+    // 0xC1
+    Instruction::new("POP BC", 6, pop_bc),
+    // 0xC2
+    Instruction::new("JP NZ, {:06X}", 0, jp_nz_nn),
+    // 0xC3
+    Instruction::new("JP {:06X}", 6, jp_nn),
+    // 0xC4
+    Instruction::new("CALL NZ, {:06X}", 0, call_nz_nn),
+    // 0xC5
+    Instruction::new("PUSH BC", 8, push_bc),
+    // 0xC6
+    Instruction::new("ADD A, {:02X}", 4, add_a_n),
+    // 0xC7
+    Instruction::new("RST 0x00", 8, rst_0),
+    // 0xC8
+    Instruction::new("RET Z", 0, ret_z),
+    // 0xC9
+    Instruction::new("RET", 2, ret),
+    // 0xCA
+    Instruction::new("JP Z, {:04X}", 0, jp_z_nn),
+    // 0xCB
+    Instruction::new("CB {:04X}", 0,  cpu_cb_n),
+    // 0xCC
+    Instruction::new("CALL Z, {:06X}", 0, call_z_nn),
+    // 0xCD
+    Instruction::new("CALL {:06X}", 6, call_nn),
+    // 0xCE
+    Instruction::new("ADD {:04X}", 4, adc_n),
+    // 0xCF
+    Instruction::new("RST 0x08", 8, rst_08),
+
+    // 0xD0
+    Instruction::new("RET NC", 0, ret_nc),
+    // 0xD1
+    Instruction::new("POP DE", 6, pop_de),
+    // 0xD2
+    Instruction::new("JP NC, {:06X}", 0, jp_nc_nn),
+    // 0xD3
+    Instruction::new("UNKNOWN", 6, undefined),
+    // 0xD4
+    Instruction::new("CALL NC, {:06X}", 0, call_nc_nn),
+    // 0xD5
+    Instruction::new("PUSH DE", 8, push_de),
+    // 0xD6
+    Instruction::new("SUB {:04X}", 4, sub_n),
+    // 0xD7
+    Instruction::new("RST 0x10", 8, rst_10),
+    // 0xD8
+    Instruction::new("RET C", 0, ret_c),
+    // 0xD9
+    Instruction::new("RETI", 2, return_from_interrupt),
+    // 0xDA
+    Instruction::new("JP C, {:04X}", 0, jp_c_nn),
+    // 0xDB
+    Instruction::new("UNKNOWN", 0, undefined),
+    // 0xDC
+    Instruction::new("CALL C, {:06X}", 0, call_c_nn),
+    // 0xDD
+    Instruction::new("UNKNOWN", 6, undefined),
+    // 0xDE
+    Instruction::new("SBC {:04X}", 4, sbc_n),
+    // 0xDF
+    Instruction::new("RST 0x18", 8, rst_18),
+
+    // 0xE0
+    Instruction::new("LD (0xFF00 + {:04X}), A", 6, ld_ff_n_ap),
+    // 0xE1
+    Instruction::new("POP HL", 6, pop_hl),
+    // 0xE2
+    Instruction::new("LD (0xFF00 + C), A", 4, ld_ff_c_a),
+    // 0xE3
+    Instruction::new("UNKNOWN", 0, undefined),
+    // 0xE4
+    Instruction::new("UNKNOWN", 0, undefined),
+    // 0xE5
+    Instruction::new("PUSH HL", 8, push_hl),
+    // 0xE6
+    Instruction::new("ADD {:04X}", 4, and_n),
+    // 0xE7
+    Instruction::new("RST 0x20", 8, rst_20),
+    // 0xE8
+    Instruction::new("ADD SP, {:04X}", 8, add_sp_n),
+    // 0xE9
+    Instruction::new("JP HL", 2, jp_hl),
+    // 0xEA
+    Instruction::new("LD ({:06X}), A", 8, ld_nnp_a),
+    // 0xEB
+    Instruction::new("UNDEFINED", 0, undefined),
+    // 0xEC
+    Instruction::new("UNDEFINED", 0, undefined),
+    // 0xED
+    Instruction::new("UNDEFINED", 0, undefined),
+    // 0xEE
+    Instruction::new("XOR {:04X}", 4, xor_n),
+    // 0xEF
+    Instruction::new("RST 0x28", 8, rst_28),
+
+    // 0xF0
+    Instruction::new("LD A, (0xFF00 + {:04X})", 6, ld_ff_ap_n),
+    // 0xF1
+    Instruction::new("POP AF", 6, pop_af),
+    // 0xF2
+    Instruction::new("LD A, (0xFF00 + C)", 4, ld_a_ff_c),
+    // 0xF3
+    Instruction::new("DI", 2, di_inst),
+    // 0xF4
+    Instruction::new("UNKNOWN", 0, undefined),
+    // 0xF5
+    Instruction::new("PUSH AF", 8, push_af),
+    // 0xF6
+    Instruction::new("OR {:04X}", 4, or_n),
+    // 0xF7
+    Instruction::new("RST 0x30", 8, rst_30),
+    // 0xF8
+    Instruction::new("LD HL, SP+{:04X}", 6, ld_hl_sp_n),
+    // 0xF9
+    Instruction::new("LD SP, HL", 4, ld_sp_hl),
+    // 0xFA
+    Instruction::new("LD A, ({:06X})", 8, ld_a_nnp),
+    // 0xFB
+    Instruction::new("EI", 2, ei),
+    // 0xFC
+    Instruction::new("UNKNOWN", 0, undefined),
+    // 0xFD
+    Instruction::new("UNKNOWN", 0, undefined),
+    // 0xFE
+    Instruction::new("CP {:04X}", 4, cp_n),
+    // 0xFF
+    Instruction::new("RST 0x38", 8, rst_38),
   ]
 }
 
@@ -1826,4 +2348,16 @@ fn compare(emulator: &mut Emulator, value: u8) {
     emulator.registers.clear_flag(FLAG_HALF_CARRY);
   }
   emulator.registers.set_flag(FLAG_NEGATIVE);
+}
+
+fn undefined(emulator: &mut Emulator) {
+  emulator.registers.pc -= 1;
+  let instruction = emulator.memory.read_byte(emulator.registers.pc);
+  // TODO: Print registers
+  // TODO: Quit
+}
+
+fn return_from_interrupt(emulator: &mut Emulator) {
+  emulator.interrupt.master = 1;
+  emulator.registers.pc = emulator.memory.read_short_from_stack();
 }
