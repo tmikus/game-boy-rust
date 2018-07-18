@@ -1851,7 +1851,9 @@ fn jp_z_nn(emulator: &mut Emulator) {
 pub fn cpu_cb_n(emulator: &mut Emulator) {
   let instruction_code = emulator.cpu.read_next_byte();
   let instruction = &mut emulator.cpu.extended_instructions[instruction_code as usize];
-  (instruction.operation)(emulator);
+  // This is a hack to get another mutable reference to the emulator.
+  let other_emulator = unsafe { &mut *emulator.cpu.emulator };
+  (instruction.operation)(other_emulator);
 }
 
 // 0xCC
