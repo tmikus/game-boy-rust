@@ -1,6 +1,6 @@
 use {
   core::{
-    cpu_cb::cpu_cb_n,
+    cpu_cb,
     emulator::Emulator,
     instruction::Instruction,
     registers::{
@@ -15,6 +15,7 @@ use {
 
 pub struct Cpu {
   pub emulator: *mut Emulator,
+  pub extended_instructions: [Instruction; 256],
   pub instructions: [Instruction; 256],
   pub stopped: bool,
   pub ticks: u64,
@@ -24,6 +25,7 @@ impl Cpu {
   pub fn new() -> Cpu {
     Cpu {
       emulator: ptr::null_mut(),
+      extended_instructions: cpu_cb::get_instructions(),
       instructions: get_instructions(),
       stopped: false,
       ticks: 0,
@@ -1843,6 +1845,13 @@ fn jp_z_nn(emulator: &mut Emulator) {
   } else {
     emulator.cpu.ticks += 12;
   }
+}
+
+// 0xCB
+pub fn cpu_cb_n(emulator: &mut Emulator) {
+  let instruction_code = emulator.cpu.read_next_byte();
+  let instruction = &mut emulator.cpu.extended_instructions[instruction_code as usize];
+  (instruction.operation)(emulator);
 }
 
 // 0xCC

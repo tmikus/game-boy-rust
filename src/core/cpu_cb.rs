@@ -1,13 +1,557 @@
 use {
   core::{
     emulator::Emulator,
+    instruction::Instruction,
     registers::{ FLAG_CARRY, FLAG_HALF_CARRY, FLAG_NEGATIVE, FLAG_ZERO }
   },
 };
 
-pub fn cpu_cb_n(emulator: &mut Emulator) {
-  let instruction = emulator.cpu.read_next_byte();
-  // TODO: Implement
+pub fn get_instructions() -> [Instruction; 256] {
+  return [
+    // 0x00
+    Instruction::new("RLC B", 8, rlc_b),
+    // 0x01
+    Instruction::new("RLC C", 8, rlc_c),
+    // 0x02
+    Instruction::new("RLC D", 8, rlc_d),
+    // 0x03
+    Instruction::new("RLC E", 8, rlc_e),
+    // 0x04
+    Instruction::new("RLC H", 8, rlc_h),
+    // 0x05
+    Instruction::new("RLC L", 8, rlc_l),
+    // 0x06
+    Instruction::new("RLC (HL)", 16, rlc_hlp),
+    // 0x07
+    Instruction::new("RLC A", 8, rlc_a),
+    
+    // 0x08
+    Instruction::new("RRC B", 8, rrc_b),
+    // 0x09
+    Instruction::new("RRC C", 8, rrc_c),
+    // 0x0A
+    Instruction::new("RRC D", 8, rrc_d),
+    // 0x0B
+    Instruction::new("RRC E", 8, rrc_e),
+    // 0x0C
+    Instruction::new("RRC H", 8, rrc_h),
+    // 0x0D
+    Instruction::new("RRC L", 8, rrc_l),
+    // 0x0E
+    Instruction::new("RRC (HL)", 16, rrc_hlp),
+    // 0x0F
+    Instruction::new("RRC A", 8, rrc_a),
+
+    // 0x10
+    Instruction::new("RL B", 8, rl_b),
+    // 0x11
+    Instruction::new("RL C", 8, rl_c),
+    // 0x12
+    Instruction::new("RL D", 8, rl_d),
+    // 0x13
+    Instruction::new("RL E", 8, rl_e),
+    // 0x14
+    Instruction::new("RL H", 8, rl_h),
+    // 0x15
+    Instruction::new("RL L", 8, rl_l),
+    // 0x16
+    Instruction::new("RL (HL)", 16, rl_hlp),
+    // 0x17
+    Instruction::new("RL A", 8, rl_a),
+    
+    // 0x18
+    Instruction::new("RR B", 8, rr_b),
+    // 0x19
+    Instruction::new("RR C", 8, rr_c),
+    // 0x1A
+    Instruction::new("RR D", 8, rr_d),
+    // 0x1B
+    Instruction::new("RR E", 8, rr_e),
+    // 0x1C
+    Instruction::new("RR H", 8, rr_h),
+    // 0x1D
+    Instruction::new("RR L", 8, rr_l),
+    // 0x1E
+    Instruction::new("RR (HL)", 16, rr_hlp),
+    // 0x1F
+    Instruction::new("RR A", 8, rr_a),
+
+    // 0x20
+    Instruction::new("SLA B", 8, sla_b),
+    // 0x21
+    Instruction::new("SLA C", 8, sla_c),
+    // 0x22
+    Instruction::new("SLA D", 8, sla_d),
+    // 0x23
+    Instruction::new("SLA E", 8, sla_e),
+    // 0x24
+    Instruction::new("SLA H", 8, sla_h),
+    // 0x25
+    Instruction::new("SLA L", 8, sla_l),
+    // 0x26
+    Instruction::new("SLA (HL)", 16, sla_hlp),
+    // 0x27
+    Instruction::new("SLA A", 8, sla_a),
+
+    // 0x28
+    Instruction::new("SRA B", 8, sra_b),
+    // 0x29
+    Instruction::new("SRA C", 8, sra_c),
+    // 0x2A
+    Instruction::new("SRA D", 8, sra_d),
+    // 0x2B
+    Instruction::new("SRA E", 8, sra_e),
+    // 0x2C
+    Instruction::new("SRA H", 8, sra_h),
+    // 0x2D
+    Instruction::new("SRA L", 8, sra_l),
+    // 0x2E
+    Instruction::new("SRA (HL)", 16, sra_hlp),
+    // 0x2F
+    Instruction::new("SRA A", 8, sra_a),
+
+    // 0x30
+    Instruction::new("SWAP B", 8, swap_b),
+    // 0x31
+    Instruction::new("SWAP C", 8, swap_c),
+    // 0x32
+    Instruction::new("SWAP D", 8, swap_d),
+    // 0x33
+    Instruction::new("SWAP E", 8, swap_e),
+    // 0x34
+    Instruction::new("SWAP H", 8, swap_h),
+    // 0x35
+    Instruction::new("SWAP L", 8, swap_l),
+    // 0x36
+    Instruction::new("SWAP (HL)", 16, swap_hlp),
+    // 0x37
+    Instruction::new("SWAP A", 8, swap_a),
+
+    // 0x38
+    Instruction::new("SRL B", 8, srl_b),
+    // 0x39
+    Instruction::new("SRL C", 8, srl_c),
+    // 0x3A
+    Instruction::new("SRL D", 8, srl_d),
+    // 0x3B
+    Instruction::new("SRL E", 8, srl_e),
+    // 0x3C
+    Instruction::new("SRL H", 8, srl_h),
+    // 0x3D
+    Instruction::new("SRL L", 8, srl_l),
+    // 0x3E
+    Instruction::new("SRL (HL)", 16, srl_hlp),
+    // 0x3F
+    Instruction::new("SRL A", 8, srl_a),
+
+    // 0x40
+    Instruction::new("BIT 0 B", 8, bit_0_b),
+    // 0x41
+    Instruction::new("BIT 0 C", 8, bit_0_c),
+    // 0x42
+    Instruction::new("BIT 0 D", 8, bit_0_d),
+    // 0x43
+    Instruction::new("BIT 0 E", 8, bit_0_e),
+    // 0x44
+    Instruction::new("BIT 0 H", 8, bit_0_h),
+    // 0x45
+    Instruction::new("BIT 0 L", 8, bit_0_l),
+    // 0x46
+    Instruction::new("BIT 0 (HL)", 12, bit_0_hlp),
+    // 0x47
+    Instruction::new("BIT 0 A", 8, bit_0_a),
+
+    // 0x48
+    Instruction::new("BIT 1 B", 8, bit_1_b),
+    // 0x49
+    Instruction::new("BIT 1 C", 8, bit_1_c),
+    // 0x4A
+    Instruction::new("BIT 1 D", 8, bit_1_d),
+    // 0x4B
+    Instruction::new("BIT 1 E", 8, bit_1_e),
+    // 0x4C
+    Instruction::new("BIT 1 H", 8, bit_1_h),
+    // 0x4D
+    Instruction::new("BIT 1 L", 8, bit_1_l),
+    // 0x4E
+    Instruction::new("BIT 1 (HL)", 12, bit_1_hlp),
+    // 0x4F
+    Instruction::new("BIT 1 A", 8, bit_1_a),
+
+    // 0x50
+    Instruction::new("BIT 2 B", 8, bit_2_b),
+    // 0x51
+    Instruction::new("BIT 2 C", 8, bit_2_c),
+    // 0x52
+    Instruction::new("BIT 2 D", 8, bit_2_d),
+    // 0x53
+    Instruction::new("BIT 2 E", 8, bit_2_e),
+    // 0x54
+    Instruction::new("BIT 2 H", 8, bit_2_h),
+    // 0x55
+    Instruction::new("BIT 2 L", 8, bit_2_l),
+    // 0x56
+    Instruction::new("BIT 2 (HL)", 12, bit_2_hlp),
+    // 0x57
+    Instruction::new("BIT 2 A", 8, bit_2_a),
+
+    // 0x58
+    Instruction::new("BIT 3 B", 8, bit_3_b),
+    // 0x59
+    Instruction::new("BIT 3 C", 8, bit_3_c),
+    // 0x5A
+    Instruction::new("BIT 3 D", 8, bit_3_d),
+    // 0x5B
+    Instruction::new("BIT 3 E", 8, bit_3_e),
+    // 0x5C
+    Instruction::new("BIT 3 H", 8, bit_3_h),
+    // 0x5D
+    Instruction::new("BIT 3 L", 8, bit_3_l),
+    // 0x5E
+    Instruction::new("BIT 3 (HL)", 12, bit_3_hlp),
+    // 0x5F
+    Instruction::new("BIT 3 A", 8, bit_3_a),
+
+    // 0x60
+    Instruction::new("BIT 4 B", 8, bit_4_b),
+    // 0x61
+    Instruction::new("BIT 4 C", 8, bit_4_c),
+    // 0x62
+    Instruction::new("BIT 4 D", 8, bit_4_d),
+    // 0x63
+    Instruction::new("BIT 4 E", 8, bit_4_e),
+    // 0x64
+    Instruction::new("BIT 4 H", 8, bit_4_h),
+    // 0x65
+    Instruction::new("BIT 4 L", 8, bit_4_l),
+    // 0x66
+    Instruction::new("BIT 4 (HL)", 12, bit_4_hlp),
+    // 0x67
+    Instruction::new("BIT 4 A", 8, bit_4_a),
+
+    // 0x68
+    Instruction::new("BIT 5 B", 8, bit_5_b),
+    // 0x69
+    Instruction::new("BIT 5 C", 8, bit_5_c),
+    // 0x6A
+    Instruction::new("BIT 5 D", 8, bit_5_d),
+    // 0x6B
+    Instruction::new("BIT 5 E", 8, bit_5_e),
+    // 0x6C
+    Instruction::new("BIT 5 H", 8, bit_5_h),
+    // 0x6D
+    Instruction::new("BIT 5 L", 8, bit_5_l),
+    // 0x6E
+    Instruction::new("BIT 5 (HL)", 12, bit_5_hlp),
+    // 0x6F
+    Instruction::new("BIT 5 A", 8, bit_5_a),
+    
+    // 0x70
+    Instruction::new("BIT 6 B", 8, bit_6_b),
+    // 0x71
+    Instruction::new("BIT 6 C", 8, bit_6_c),
+    // 0x72
+    Instruction::new("BIT 6 D", 8, bit_6_d),
+    // 0x73
+    Instruction::new("BIT 6 E", 8, bit_6_e),
+    // 0x74
+    Instruction::new("BIT 6 H", 8, bit_6_h),
+    // 0x75
+    Instruction::new("BIT 6 L", 8, bit_6_l),
+    // 0x76
+    Instruction::new("BIT 6 (HL)", 12, bit_6_hlp),
+    // 0x77
+    Instruction::new("BIT 6 A", 8, bit_6_a),
+
+    // 0x78
+    Instruction::new("BIT 7 B", 8, bit_7_b),
+    // 0x79
+    Instruction::new("BIT 7 C", 8, bit_7_c),
+    // 0x7A
+    Instruction::new("BIT 7 D", 8, bit_7_d),
+    // 0x7B
+    Instruction::new("BIT 7 E", 8, bit_7_e),
+    // 0x7C
+    Instruction::new("BIT 7 H", 8, bit_7_h),
+    // 0x7D
+    Instruction::new("BIT 7 L", 8, bit_7_l),
+    // 0x7E
+    Instruction::new("BIT 7 (HL)", 12, bit_7_hlp),
+    // 0x7F
+    Instruction::new("BIT 7 A", 8, bit_7_a),
+    
+    // 0x80
+    Instruction::new("RES 0 B", 8, res_0_b),
+    // 0x81
+    Instruction::new("RES 0 C", 8, res_0_c),
+    // 0x82
+    Instruction::new("RES 0 D", 8, res_0_d),
+    // 0x83
+    Instruction::new("RES 0 E", 8, res_0_e),
+    // 0x84
+    Instruction::new("RES 0 H", 8, res_0_h),
+    // 0x85
+    Instruction::new("RES 0 L", 8, res_0_l),
+    // 0x86
+    Instruction::new("RES 0 (HL)", 12, res_0_hlp),
+    // 0x87
+    Instruction::new("RES 0 A", 8, res_0_a),
+
+    // 0x88
+    Instruction::new("RES 1 B", 8, res_1_b),
+    // 0x89
+    Instruction::new("RES 1 C", 8, res_1_c),
+    // 0x8A
+    Instruction::new("RES 1 D", 8, res_1_d),
+    // 0x8B
+    Instruction::new("RES 1 E", 8, res_1_e),
+    // 0x8C
+    Instruction::new("RES 1 H", 8, res_1_h),
+    // 0x8D
+    Instruction::new("RES 1 L", 8, res_1_l),
+    // 0x8E
+    Instruction::new("RES 1 (HL)", 12, res_1_hlp),
+    // 0x8F
+    Instruction::new("RES 1 A", 8, res_1_a),
+
+    // 0x90
+    Instruction::new("RES 2 B", 8, res_2_b),
+    // 0x91
+    Instruction::new("RES 2 C", 8, res_2_c),
+    // 0x92
+    Instruction::new("RES 2 D", 8, res_2_d),
+    // 0x93
+    Instruction::new("RES 2 E", 8, res_2_e),
+    // 0x94
+    Instruction::new("RES 2 H", 8, res_2_h),
+    // 0x95
+    Instruction::new("RES 2 L", 8, res_2_l),
+    // 0x96
+    Instruction::new("RES 2 (HL)", 12, res_2_hlp),
+    // 0x97
+    Instruction::new("RES 2 A", 8, res_2_a),
+
+    // 0x98
+    Instruction::new("RES 3 B", 8, res_3_b),
+    // 0x99
+    Instruction::new("RES 3 C", 8, res_3_c),
+    // 0x9A
+    Instruction::new("RES 3 D", 8, res_3_d),
+    // 0x9B
+    Instruction::new("RES 3 E", 8, res_3_e),
+    // 0x9C
+    Instruction::new("RES 3 H", 8, res_3_h),
+    // 0x9D
+    Instruction::new("RES 3 L", 8, res_3_l),
+    // 0x9E
+    Instruction::new("RES 3 (HL)", 12, res_3_hlp),
+    // 0x9F
+    Instruction::new("RES 3 A", 8, res_3_a),
+
+    // 0xA0
+    Instruction::new("RES 4 B", 8, res_4_b),
+    // 0xA1
+    Instruction::new("RES 4 C", 8, res_4_c),
+    // 0xA2
+    Instruction::new("RES 4 D", 8, res_4_d),
+    // 0xA3
+    Instruction::new("RES 4 E", 8, res_4_e),
+    // 0xA4
+    Instruction::new("RES 4 H", 8, res_4_h),
+    // 0xA5
+    Instruction::new("RES 4 L", 8, res_4_l),
+    // 0xA6
+    Instruction::new("RES 4 (HL)", 12, res_4_hlp),
+    // 0xA7
+    Instruction::new("RES 4 A", 8, res_4_a),
+
+    // 0xA8
+    Instruction::new("RES 5 B", 8, res_5_b),
+    // 0xA9
+    Instruction::new("RES 5 C", 8, res_5_c),
+    // 0xAA
+    Instruction::new("RES 5 D", 8, res_5_d),
+    // 0xAB
+    Instruction::new("RES 5 E", 8, res_5_e),
+    // 0xAC
+    Instruction::new("RES 5 H", 8, res_5_h),
+    // 0xAD
+    Instruction::new("RES 5 L", 8, res_5_l),
+    // 0xAE
+    Instruction::new("RES 5 (HL)", 12, res_5_hlp),
+    // 0xAF
+    Instruction::new("RES 5 A", 8, res_5_a),
+
+    // 0xB0
+    Instruction::new("RES 6 B", 8, res_6_b),
+    // 0xB1
+    Instruction::new("RES 6 C", 8, res_6_c),
+    // 0xB2
+    Instruction::new("RES 6 D", 8, res_6_d),
+    // 0xB3
+    Instruction::new("RES 6 E", 8, res_6_e),
+    // 0xB4
+    Instruction::new("RES 6 H", 8, res_6_h),
+    // 0xB5
+    Instruction::new("RES 6 L", 8, res_6_l),
+    // 0xB6
+    Instruction::new("RES 6 (HL)", 12, res_6_hlp),
+    // 0xB7
+    Instruction::new("RES 6 A", 8, res_6_a),
+
+    // 0xB8
+    Instruction::new("RES 7 B", 8, res_7_b),
+    // 0xB9
+    Instruction::new("RES 7 C", 8, res_7_c),
+    // 0xBA
+    Instruction::new("RES 7 D", 8, res_7_d),
+    // 0xBB
+    Instruction::new("RES 7 E", 8, res_7_e),
+    // 0xBC
+    Instruction::new("RES 7 H", 8, res_7_h),
+    // 0xBD
+    Instruction::new("RES 7 L", 8, res_7_l),
+    // 0xBE
+    Instruction::new("RES 7 (HL)", 12, res_7_hlp),
+    // 0xBF
+    Instruction::new("RES 7 A", 8, res_7_a),
+
+    // 0xC0
+    Instruction::new("SET 0 B", 8, set_0_b),
+    // 0xC1
+    Instruction::new("SET 0 C", 8, set_0_c),
+    // 0xC2
+    Instruction::new("SET 0 D", 8, set_0_d),
+    // 0xC3
+    Instruction::new("SET 0 E", 8, set_0_e),
+    // 0xC4
+    Instruction::new("SET 0 H", 8, set_0_h),
+    // 0xC5
+    Instruction::new("SET 0 L", 8, set_0_l),
+    // 0xC6
+    Instruction::new("SET 0 (HL)", 12, set_0_hlp),
+    // 0xC7
+    Instruction::new("SET 0 A", 8, set_0_a),
+
+    // 0xC8
+    Instruction::new("SET 1 B", 8, set_1_b),
+    // 0xC9
+    Instruction::new("SET 1 C", 8, set_1_c),
+    // 0xCA
+    Instruction::new("SET 1 D", 8, set_1_d),
+    // 0xCB
+    Instruction::new("SET 1 E", 8, set_1_e),
+    // 0xCC
+    Instruction::new("SET 1 H", 8, set_1_h),
+    // 0xCD
+    Instruction::new("SET 1 L", 8, set_1_l),
+    // 0xCE
+    Instruction::new("SET 1 (HL)", 12, set_1_hlp),
+    // 0xCF
+    Instruction::new("SET 1 A", 8, set_1_a),
+
+    // 0xD0
+    Instruction::new("SET 2 B", 8, set_2_b),
+    // 0xD1
+    Instruction::new("SET 2 C", 8, set_2_c),
+    // 0xD2
+    Instruction::new("SET 2 D", 8, set_2_d),
+    // 0xD3
+    Instruction::new("SET 2 E", 8, set_2_e),
+    // 0xD4
+    Instruction::new("SET 2 H", 8, set_2_h),
+    // 0xD5
+    Instruction::new("SET 2 L", 8, set_2_l),
+    // 0xD6
+    Instruction::new("SET 2 (HL)", 12, set_2_hlp),
+    // 0xD7
+    Instruction::new("SET 2 A", 8, set_2_a),
+
+    // 0xD8
+    Instruction::new("SET 3 B", 8, set_3_b),
+    // 0xD9
+    Instruction::new("SET 3 C", 8, set_3_c),
+    // 0xDA
+    Instruction::new("SET 3 D", 8, set_3_d),
+    // 0xDB
+    Instruction::new("SET 3 E", 8, set_3_e),
+    // 0xDC
+    Instruction::new("SET 3 H", 8, set_3_h),
+    // 0xDD
+    Instruction::new("SET 3 L", 8, set_3_l),
+    // 0xDE
+    Instruction::new("SET 3 (HL)", 12, set_3_hlp),
+    // 0xDF
+    Instruction::new("SET 3 A", 8, set_3_a),
+
+    // 0xE0
+    Instruction::new("SET 4 B", 8, set_4_b),
+    // 0xE1
+    Instruction::new("SET 4 C", 8, set_4_c),
+    // 0xE2
+    Instruction::new("SET 4 D", 8, set_4_d),
+    // 0xE3
+    Instruction::new("SET 4 E", 8, set_4_e),
+    // 0xE4
+    Instruction::new("SET 4 H", 8, set_4_h),
+    // 0xE5
+    Instruction::new("SET 4 L", 8, set_4_l),
+    // 0xE6
+    Instruction::new("SET 4 (HL)", 12, set_4_hlp),
+    // 0xE7
+    Instruction::new("SET 4 A", 8, set_4_a),
+
+    // 0xE8
+    Instruction::new("SET 5 B", 8, set_5_b),
+    // 0xE9
+    Instruction::new("SET 5 C", 8, set_5_c),
+    // 0xEA
+    Instruction::new("SET 5 D", 8, set_5_d),
+    // 0xEB
+    Instruction::new("SET 5 E", 8, set_5_e),
+    // 0xEC
+    Instruction::new("SET 5 H", 8, set_5_h),
+    // 0xED
+    Instruction::new("SET 5 L", 8, set_5_l),
+    // 0xEE
+    Instruction::new("SET 5 (HL)", 12, set_5_hlp),
+    // 0xEF
+    Instruction::new("SET 5 A", 8, set_5_a),
+
+    // 0xF0
+    Instruction::new("SET 6 B", 8, set_6_b),
+    // 0xF1
+    Instruction::new("SET 6 C", 8, set_6_c),
+    // 0xF2
+    Instruction::new("SET 6 D", 8, set_6_d),
+    // 0xF3
+    Instruction::new("SET 6 E", 8, set_6_e),
+    // 0xF4
+    Instruction::new("SET 6 H", 8, set_6_h),
+    // 0xF5
+    Instruction::new("SET 6 L", 8, set_6_l),
+    // 0xF6
+    Instruction::new("SET 6 (HL)", 12, set_6_hlp),
+    // 0xF7
+    Instruction::new("SET 6 A", 8, set_6_a),
+
+    // 0xF8
+    Instruction::new("SET 7 B", 8, set_7_b),
+    // 0xF9
+    Instruction::new("SET 7 C", 8, set_7_c),
+    // 0xFA
+    Instruction::new("SET 7 D", 8, set_7_d),
+    // 0xFB
+    Instruction::new("SET 7 E", 8, set_7_e),
+    // 0xFC
+    Instruction::new("SET 7 H", 8, set_7_h),
+    // 0xFD
+    Instruction::new("SET 7 L", 8, set_7_l),
+    // 0xFE
+    Instruction::new("SET 7 (HL)", 12, set_7_hlp),
+    // 0xFF
+    Instruction::new("SET 7 A", 8, set_7_a),
+  ];
 }
 
 // 0x00
