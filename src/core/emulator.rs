@@ -6,7 +6,6 @@ use {
     memory::Memory,
     registers::Registers,
   },
-  std::ptr,
 };
 
 pub struct Emulator {

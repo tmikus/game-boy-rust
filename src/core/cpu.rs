@@ -47,10 +47,16 @@ impl Cpu {
   }
 
   pub fn run_next(&mut self) {
-
+    if self.stopped {
+      return;
+    }
+    let emulator = unsafe { &mut *self.emulator };
+    let instruction_code = emulator.memory.read_byte(emulator.registers.pc);
+    emulator.registers.pc += 1;
+    let instruction = &self.instructions[instruction_code as usize];
+    (instruction.operation)(emulator);
+    self.ticks += instruction.operation_time as u64;
   }
-
-
 }
 
 fn get_instructions() -> [Instruction; 256] {
@@ -1854,6 +1860,7 @@ pub fn cpu_cb_n(emulator: &mut Emulator) {
   // This is a hack to get another mutable reference to the emulator.
   let other_emulator = unsafe { &mut *emulator.cpu.emulator };
   (instruction.operation)(other_emulator);
+  emulator.cpu.ticks += instruction.operation_time as u64;
 }
 
 // 0xCC
