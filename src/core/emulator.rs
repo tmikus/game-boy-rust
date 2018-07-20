@@ -2,6 +2,7 @@ use {
   core::{
     colour::Colour,
     cpu::Cpu,
+    gpu::Gpu,
     interrupt::Interrupt,
     memory::Memory,
     registers::Registers,
@@ -10,6 +11,7 @@ use {
 
 pub struct Emulator {
   pub cpu: Cpu,
+  pub gpu: Gpu,
   pub interrupt: Interrupt,
   pub memory: Memory,
   pub palette: [Colour; 4],
@@ -20,6 +22,7 @@ impl Emulator {
   pub fn new() -> Emulator {
     let mut emulator = Emulator {
       cpu: Cpu::new(),
+      gpu: Gpu::new(),
       interrupt: Interrupt::new(),
       memory: Memory::new(),
       palette: [

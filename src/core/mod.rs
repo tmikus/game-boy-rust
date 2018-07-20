@@ -8,3 +8,4 @@ pub mod interrupt;
 pub mod keys;
 pub mod memory;
 pub mod registers;
+pub mod sprite;
