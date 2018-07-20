@@ -3,11 +3,11 @@ use {
   std::ptr,
 };
 
-const INTERRUPT_VBLANK: u8 = 1 << 0;
-const INTERRUPT_LCDSTAT: u8 = 1 << 1;
-const INTERRUPT_TIMER: u8 = 1 << 2;
-const INTERRUPT_SERIAL: u8 = 1 << 3;
-const INTERRUPT_JOYPAD: u8 = 1 << 4;
+pub const INTERRUPT_VBLANK: u8 = 1 << 0;
+pub const INTERRUPT_LCDSTAT: u8 = 1 << 1;
+pub const INTERRUPT_TIMER: u8 = 1 << 2;
+pub const INTERRUPT_SERIAL: u8 = 1 << 3;
+pub const INTERRUPT_JOYPAD: u8 = 1 << 4;
 
 pub struct Interrupt {
   pub emulator: *mut Emulator,

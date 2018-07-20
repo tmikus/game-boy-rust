@@ -1,5 +1,10 @@
 use {
-  core::colour::Colour,
+  core::{
+    colour::Colour,
+    emulator::Emulator,
+    interrupt::INTERRUPT_VBLANK,
+  },
+  std::ptr,
 };
 
 const GPU_BG_ENABLE: u8 = 1 << 0;
@@ -18,14 +23,24 @@ const PALETTE: [Colour; 4] = [
   Colour { r: 0, g: 0, b: 0 },
 ];
 
+pub enum GpuMode {
+  HBlank,
+  VBlank,
+  OAM,
+  VRAM,
+}
+
 pub struct Gpu {
   pub background_palette: [Colour; 4],
   pub control: u8,
+  pub emulator: *mut Emulator,
+  pub last_cpu_ticks: u64,
+  pub mode: GpuMode,
   pub scan_line: u8,
   pub scroll_x: u8,
   pub scroll_y: u8,
   pub sprite_palette: [Colour; 4 * 2],
-  pub tick: u64,
+  pub ticks: u64,
   pub tiles: [u8; 8 * 8 * 384],
 }
 
@@ -34,6 +49,9 @@ impl Gpu {
     Gpu {
       background_palette: PALETTE,
       control: 0,
+      emulator: ptr::null_mut(),
+      last_cpu_ticks: 0,
+      mode: GpuMode::HBlank,
       scan_line: 0,
       scroll_x: 0,
       scroll_y: 0,
@@ -47,8 +65,56 @@ impl Gpu {
         PALETTE[2],
         PALETTE[3],
       ],
-      tick: 0,
+      ticks: 0,
       tiles: [0; 384 * 8 * 8],
     }
+  }
+
+  pub fn next_tick(&mut self) {
+    let emulator = unsafe { &mut *self.emulator };
+    self.ticks += emulator.cpu.ticks - self.last_cpu_ticks;
+    self.last_cpu_ticks = emulator.cpu.ticks;
+    match self.mode {
+      GpuMode::HBlank => {
+        if self.ticks >= 204 {
+          self.scan_line += 1;
+          if self.scan_line == 143 {
+            if emulator.interrupt.enable & INTERRUPT_VBLANK != 0 {
+              emulator.interrupt.flags |= INTERRUPT_VBLANK;
+            }
+            self.mode = GpuMode::VBlank;
+          } else {
+            self.mode = GpuMode::OAM;
+            self.ticks -= 204;
+          }
+        }
+      },
+      GpuMode::VBlank => {
+        if self.ticks >= 456 {
+          self.scan_line += 1;
+          if self.scan_line > 153 {
+            self.scan_line = 0;
+            self.mode = GpuMode::OAM;
+          }
+          self.ticks -= 456;
+        }
+      },
+      GpuMode::OAM => {
+        if self.ticks >= 80 {
+          self.mode = GpuMode::VRAM;
+          self.ticks -= 80;
+        }
+      },
+      GpuMode::VRAM => {
+        if self.ticks >= 172 {
+          self.mode = GpuMode::HBlank;
+          self.ticks -= 172;
+        }
+      },
+    };
+  }
+
+  pub fn update_tile(&mut self, address: u16, value: u8) {
+
   }
 }
