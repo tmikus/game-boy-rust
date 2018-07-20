@@ -16,7 +16,7 @@ const GPU_WINDOW_ENABLE: u8 = 1 << 5;
 const GPU_WINDOW_TILEMAP: u8 = 1 << 6;
 const GPU_DISPLAY_ENABLE: u8 = 1 << 7;
 
-const PALETTE: [Colour; 4] = [
+pub const PALETTE: [Colour; 4] = [
   Colour { r: 255, g: 255, b: 255 },
   Colour { r: 192, g: 192, b: 192 },
   Colour { r: 96, g: 96, b: 96 },
@@ -115,6 +115,24 @@ impl Gpu {
   }
 
   pub fn update_tile(&mut self, address: u16, value: u8) {
-
+    let emulator = unsafe { &mut *self.emulator };
+    let address = address & 0x1FFE;
+    let tile = (address >> 4) & 511;
+    let y = (address >> 1) & 7;
+    let mut bit_index: u8;
+    for x in 0..8 {
+      bit_index = 1 << (7 - x);
+      let first_bit = if (emulator.memory.vram[address as usize] & bit_index) != 0 {
+        1u8
+      } else {
+        0u8
+      };
+      let second_bit = if (emulator.memory.vram[(address + 1) as usize] & bit_index) != 0 {
+        2u8
+      } else {
+        0u8
+      };
+      self.tiles[(tile * 64 + y * 8 + x) as usize] = first_bit + second_bit;
+    }
   }
 }

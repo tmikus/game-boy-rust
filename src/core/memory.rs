@@ -1,6 +1,7 @@
 use {
   core::{
     emulator::Emulator,
+    gpu::PALETTE,
     interrupt::Interrupt,
     registers::Registers,
     keys::Keys,
@@ -20,14 +21,14 @@ const HRAM_SIZE: usize = 0x80;
 pub struct Memory {
   pub emulator: *mut Emulator,
   // TODO: Refactor these to use actual devices once starting to get stuff displayed
-  cart: [u8; CART_SIZE],
-  sram: [u8; SRAM_SIZE],
-  io: [u8; IO_SIZE],
-  vram: [u8; VRAM_SIZE],
-  oam: [u8; OAM_SIZE],
-  wram: [u8; WRAM_SIZE],
-  hram: [u8; HRAM_SIZE],
-  keys: Keys,
+  pub cart: [u8; CART_SIZE],
+  pub sram: [u8; SRAM_SIZE],
+  pub io: [u8; IO_SIZE],
+  pub vram: [u8; VRAM_SIZE],
+  pub oam: [u8; OAM_SIZE],
+  pub wram: [u8; WRAM_SIZE],
+  pub hram: [u8; HRAM_SIZE],
+  pub keys: Keys,
 }
 
 impl Memory {
@@ -36,7 +37,6 @@ impl Memory {
       emulator: ptr::null_mut(),
       cart: [0; CART_SIZE],
       sram: [0; SRAM_SIZE],
-      // TODO Is this correct?
       io: [
         0x0F, 0x00, 0x7C, 0xFF, 0x00, 0x00, 0x00, 0xF8, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x01,
         0x80, 0xBF, 0xF3, 0xFF, 0xBF, 0xFF, 0x3F, 0x00, 0xFF, 0xBF, 0x7F, 0xFF, 0x9F, 0xFF, 0xBF, 0xFF,
@@ -63,6 +63,13 @@ impl Memory {
     }
   }
 
+  fn copy(&mut self, destination: u16, source: u16, length: u16) {
+    for i in 0..length {
+      let byte = self.read_byte(source + i);
+      self.write_byte(destination + i, byte);
+    }
+  }
+
   pub fn read_byte(&self, address: u16) -> u8 {
     if address <= 0x7FFF {
       return self.cart[address as usize];
@@ -86,7 +93,18 @@ impl Memory {
     if address == 0xFF04 {
       return rand::random::<u8>();
     }
-    // TODO: Add GPU
+    if address == 0xFF40 {
+      return unsafe { (*self.emulator).gpu.control };
+    }
+    if address == 0xFF42 {
+      return unsafe { (*self.emulator).gpu.scroll_y };
+    }
+    if address == 0xFF43 {
+      return unsafe { (*self.emulator).gpu.scroll_x };
+    }
+    if address == 0xFF44 {
+      return unsafe { (*self.emulator).gpu.scan_line };
+    }
     if address == 0xFF00 {
       if (self.io[0x00] & 0x20) == 0 {
         return 0xC0 | self.keys.get_keys_1() | 0x10;
@@ -132,7 +150,8 @@ impl Memory {
     else if address >= 0x8000 && address <= 0x9fff {
       self.vram[(address - 0x8000) as usize] = value;
       if address <= 0x97FF {
-        // TODO: Update tile
+        let emulator = unsafe { &mut *self.emulator };
+        emulator.gpu.update_tile(address, value);
       }
     }
     else if address >= 0xC000 && address <= 0xDFFF {
@@ -147,8 +166,39 @@ impl Memory {
     else if address >= 0xFF80 && address <= 0xFFFE {
       self.hram[(address - 0xFF80) as usize] = value
     }
-    // TODO: Add GPU
-    // TODO: Add background and sprite palette
+    else if address == 0xFF40 {
+      let emulator = unsafe { &mut *self.emulator };
+      emulator.gpu.control = value;
+    }
+    else if address == 0xFF42 {
+      let emulator = unsafe { &mut *self.emulator };
+      emulator.gpu.scroll_y = value;
+    }
+    else if address == 0xFF43 {
+      let emulator = unsafe { &mut *self.emulator };
+      emulator.gpu.scroll_x = value;
+    }
+    else if address == 0xFF46 {
+      self.copy(0xFE00, (value as u16) << 8, 160);
+    }
+    else if address == 0xFF47 {
+      let emulator = unsafe { &mut *self.emulator };
+      for i in 0..4 {
+        emulator.gpu.background_palette[i] = PALETTE[((value >> (i * 2)) & 3) as usize];
+      }
+    }
+    else if address == 0xFF48 {
+      let emulator = unsafe { &mut *self.emulator };
+      for i in 0..4 {
+        emulator.gpu.sprite_palette[i] = PALETTE[((value >> (i * 2)) & 3) as usize];
+      }
+    }
+    else if address == 0xFF49 {
+      let emulator = unsafe { &mut *self.emulator };
+      for i in 0..4 {
+        emulator.gpu.sprite_palette[4 + i] = PALETTE[((value >> (i * 2)) & 3) as usize];
+      }
+    }
     else if address >= 0xFF00 && address <= 0xFF7F {
       self.io[(address - 0xFF00) as usize] = value;
     }
