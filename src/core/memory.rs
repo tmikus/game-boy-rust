@@ -151,7 +151,7 @@ impl Memory {
       self.vram[(address - 0x8000) as usize] = value;
       if address <= 0x97FF {
         let emulator = unsafe { &mut *self.emulator };
-        emulator.gpu.update_tile(address, value);
+        emulator.gpu.update_tile(address);
       }
     }
     else if address >= 0xC000 && address <= 0xDFFF {

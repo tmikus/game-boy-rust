@@ -860,7 +860,7 @@ fn ld_h_n(emulator: &mut Emulator) {
 
 // 0x27
 fn daa(emulator: &mut Emulator) {
-  let mut a = emulator.registers.a;
+  let mut a: u16 = emulator.registers.a as u16;
   if emulator.registers.is_flag_set(FLAG_NEGATIVE) {
     if emulator.registers.is_flag_set(FLAG_HALF_CARRY) {
       a = (a - 0x06) & 0xFF;
@@ -876,7 +876,7 @@ fn daa(emulator: &mut Emulator) {
       a += 0x60;
     }
   }
-  emulator.registers.a = a;
+  emulator.registers.a = (a & 0xFF) as u8;
   emulator.registers.clear_flag(FLAG_HALF_CARRY);
   if a > 0 {
     emulator.registers.clear_flag(FLAG_ZERO);
@@ -2042,13 +2042,13 @@ fn rst_20(emulator: &mut Emulator) {
 // 0xE8
 fn add_sp_n(emulator: &mut Emulator) {
   let operand = emulator.cpu.read_next_byte() as u16;
-  let result = emulator.registers.sp + operand;
+  let result: u32 = (emulator.registers.sp as u32) + operand as u32;
   if result & 0xFFFF0000 != 0 {
     emulator.registers.set_flag(FLAG_CARRY);
   } else {
     emulator.registers.clear_flag(FLAG_CARRY);
   }
-  emulator.registers.sp = result & 0xFFFF;
+  emulator.registers.sp = (result & 0xFFFF) as u16;
   if (emulator.registers.sp & 0x0F) + (operand & 0x0F) > 0x0F {
     emulator.registers.set_flag(FLAG_HALF_CARRY);
   } else {
@@ -2122,7 +2122,7 @@ fn rst_30(emulator: &mut Emulator) {
 // 0xF8
 fn ld_hl_sp_n(emulator: &mut Emulator) {
   let operand = emulator.cpu.read_next_byte();
-  let result = emulator.registers.sp + operand as u16;
+  let result: u32 = (emulator.registers.sp as u32) + (operand as u32);
   if result & 0xFFFF0000 != 0 {
     emulator.registers.set_flag(FLAG_CARRY);
   } else {
@@ -2134,7 +2134,7 @@ fn ld_hl_sp_n(emulator: &mut Emulator) {
     emulator.registers.clear_flag(FLAG_HALF_CARRY);
   }
   emulator.registers.clear_flag(FLAG_ZERO | FLAG_NEGATIVE);
-  emulator.registers.set_hl(result & 0xFFFF);
+  emulator.registers.set_hl((result & 0xFFFF) as u16);
 }
 
 // 0xF9

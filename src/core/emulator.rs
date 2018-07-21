@@ -49,4 +49,12 @@ impl Emulator {
     self.memory.emulator = self;
     self.registers = Registers::new();
   }
+
+  pub fn main_loop(&mut self) {
+    loop {
+      self.cpu.run_next();
+      self.gpu.next_tick();
+      self.interrupt.step();
+    }
+  }
 }

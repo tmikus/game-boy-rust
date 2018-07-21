@@ -114,7 +114,7 @@ impl Gpu {
     };
   }
 
-  pub fn update_tile(&mut self, address: u16, value: u8) {
+  pub fn update_tile(&mut self, address: u16) {
     let emulator = unsafe { &mut *self.emulator };
     let address = address & 0x1FFE;
     let tile = (address >> 4) & 511;
