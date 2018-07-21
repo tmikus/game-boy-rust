@@ -3,6 +3,7 @@ use {
     colour::Colour,
     emulator::Emulator,
     interrupt::INTERRUPT_VBLANK,
+    sprite::Sprite,
   },
   std::ptr,
 };
@@ -133,9 +134,7 @@ impl Gpu {
     for i in 0..160 {
       let colour = self.tiles[((tile * 8 * 8) + (y as u16 * 8) + x as u16) as usize];
       scan_line_row[i] = colour;
-      self.frame_buffer[pixel_offset as usize].r = self.background_palette[colour as usize].r;
-      self.frame_buffer[pixel_offset as usize].g = self.background_palette[colour as usize].g;
-      self.frame_buffer[pixel_offset as usize].b = self.background_palette[colour as usize].b;
+      self.frame_buffer[pixel_offset as usize] = self.background_palette[colour as usize];
       x += 1;
       if x == 8 {
         x = 0;
@@ -143,8 +142,34 @@ impl Gpu {
         tile = emulator.memory.vram[(map_offset + line_offset as u16) as usize] as u16;
       }
     }
-    for i in i..40 {
-
+    for i in 0..40 {
+      let sprite = Sprite::from_array(&emulator.memory.oam, i);
+      let sx = sprite.x - 8;
+      let sy = sprite.y - 16;
+      if sy <= self.scan_line && (sy + 8) > self.scan_line {
+        let palette_offset = sprite.get_palette() * 4;
+        let pixel_offset = self.scan_line * 160 + sx;
+        let tile_row = if sprite.get_v_flip() != 0 {
+          7 - (self.scan_line - sy)
+        } else {
+          self.scan_line - sy
+        };
+        for x in 0..8 {
+          if  sx + x >= 0
+            && sx + x < 160
+            && ((!sprite.get_priority()) != 0 || (!scan_line_row[(sx + x) as usize]) != 0) {
+            let colour = if sprite.get_h_flip() != 0 {
+              self.tiles[((sprite.tile * 8 * 8) + (tile_row * 8) + (7 - x)) as usize]
+            } else {
+              self.tiles[((sprite.tile * 8 * 8) + (tile_row * 8) + x) as usize]
+            };
+            if colour != 0 {
+              let sprite_colour = self.sprite_palette[(palette_offset + colour) as usize];
+              self.frame_buffer[pixel_offset as usize] = sprite_colour;
+            }
+          }
+        }
+      }
     }
   }
 
