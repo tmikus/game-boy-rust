@@ -73,7 +73,7 @@ impl Gpu {
     }
   }
 
-  pub fn next_tick(&mut self) {
+  pub fn run_tick(&mut self) {
     let emulator = unsafe { &mut *self.emulator };
     self.ticks += emulator.cpu.ticks - self.last_cpu_ticks;
     self.last_cpu_ticks = emulator.cpu.ticks;

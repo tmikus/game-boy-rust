@@ -50,11 +50,9 @@ impl Emulator {
     self.registers = Registers::new();
   }
 
-  pub fn main_loop(&mut self) {
-    loop {
-      self.cpu.run_next();
-      self.gpu.next_tick();
-      self.interrupt.step();
-    }
+  pub fn run_tick(&mut self) {
+    self.cpu.run_tick();
+    self.gpu.run_tick();
+    self.interrupt.run_tick();
   }
 }

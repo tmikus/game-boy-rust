@@ -46,7 +46,7 @@ impl Cpu {
     value
   }
 
-  pub fn run_next(&mut self) {
+  pub fn run_tick(&mut self) {
     if self.stopped {
       return;
     }

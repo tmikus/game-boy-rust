@@ -32,7 +32,7 @@ impl Interrupt {
     self.flags = 0;
   }
 
-  pub fn step(&mut self) {
+  pub fn run_tick(&mut self) {
     if self.master == 0 || self.enable == 0 || self.flags == 0 {
       return;
     }
