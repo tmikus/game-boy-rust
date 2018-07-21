@@ -34,6 +34,7 @@ pub struct Gpu {
   pub background_palette: [Colour; 4],
   pub control: u8,
   pub emulator: *mut Emulator,
+  pub frame_buffer: [Colour; 160 * 144],
   pub last_cpu_ticks: u64,
   pub mode: GpuMode,
   pub scan_line: u8,
@@ -50,6 +51,7 @@ impl Gpu {
       background_palette: PALETTE,
       control: 0,
       emulator: ptr::null_mut(),
+      frame_buffer: [Colour::new(0, 0, 0); 160 * 144],
       last_cpu_ticks: 0,
       mode: GpuMode::HBlank,
       scan_line: 0,
@@ -95,7 +97,7 @@ impl Gpu {
           if self.scan_line > 153 {
             self.scan_line = 0;
             self.mode = GpuMode::OAM;
-          }
+          } 
           self.ticks -= 456;
         }
       },
@@ -112,6 +114,38 @@ impl Gpu {
         }
       },
     };
+  }
+
+  pub fn render_scan_line(&mut self) {
+    let emulator = unsafe { &mut *self.emulator };
+    let mut map_offset: u16 = if (self.control & GPU_TILEMAP) != 0 {
+      0x1C00
+    } else {
+      0x1800
+    };
+    map_offset += (((self.scan_line as u16 + self.scroll_y as u16) & 0xFF) >> 3) << 5;
+    let mut line_offset = self.scroll_x >> 3;
+    let mut x = self.scroll_x & 7;
+    let y = (self.scan_line + self.scroll_y) & 7;
+    let pixel_offset = self.scan_line * 160;
+    let mut tile = emulator.memory.vram[(map_offset + line_offset as u16) as usize] as u16;
+    let mut scan_line_row = [0u8; 160];
+    for i in 0..160 {
+      let colour = self.tiles[((tile * 8 * 8) + (y as u16 * 8) + x as u16) as usize];
+      scan_line_row[i] = colour;
+      self.frame_buffer[pixel_offset as usize].r = self.background_palette[colour as usize].r;
+      self.frame_buffer[pixel_offset as usize].g = self.background_palette[colour as usize].g;
+      self.frame_buffer[pixel_offset as usize].b = self.background_palette[colour as usize].b;
+      x += 1;
+      if x == 8 {
+        x = 0;
+        line_offset = (line_offset + 1) & 31;
+        tile = emulator.memory.vram[(map_offset + line_offset as u16) as usize] as u16;
+      }
+    }
+    for i in i..40 {
+
+    }
   }
 
   pub fn update_tile(&mut self, address: u16) {
