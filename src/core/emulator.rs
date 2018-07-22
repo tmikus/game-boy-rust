@@ -15,7 +15,6 @@ pub struct Emulator {
   pub gpu: Gpu,
   pub interrupt: Interrupt,
   pub memory: Memory,
-  pub palette: [Colour; 4],
   pub registers: Registers,
 }
 
@@ -26,13 +25,6 @@ impl Emulator {
       gpu: Gpu::new(),
       interrupt: Interrupt::new(),
       memory: Memory::new(),
-      palette: [
-        // TODO: Fix this
-        Colour::new(0, 0, 0),
-        Colour::new(0, 0, 0),
-        Colour::new(0, 0, 0),
-        Colour::new(0, 0, 0),
-      ],
       registers: Registers::new(),
     };
     emulator.cpu.emulator = &mut emulator;
