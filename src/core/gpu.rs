@@ -10,8 +10,15 @@ use {
       NoIndices,
       PrimitiveType,
     },
-    texture::{RawImage2d, Texture2d},
-    uniforms::EmptyUniforms,
+    texture::{
+      RawImage2d,
+      Texture2d,
+    },
+    uniforms::{
+      MagnifySamplerFilter,
+      Sampler,
+      SamplerBehavior,
+    },
     Display,
     Program,
     Surface,
@@ -311,7 +318,10 @@ impl Gpu {
     let image = RawImage2d::from_raw_rgb(colours, (160, 144));
     let texture = Texture2d::new(&display, image).unwrap();
     let uniforms = uniform! {
-      tex: &texture,
+      tex: Sampler(&texture, SamplerBehavior {
+        magnify_filter: MagnifySamplerFilter::Nearest,
+        ..Default::default()
+      }),
     };
 
     target.draw(vertex_buffer, indices, program, &uniforms, &Default::default()).unwrap();
