@@ -729,7 +729,7 @@ fn ld_dep_a(emulator: &mut Emulator) {
 // 0x13
 fn inc_de(emulator: &mut Emulator) {
   let de = emulator.registers.get_de();
-  emulator.registers.set_de(de + 1);
+  emulator.registers.set_de((Wrapping(de) + Wrapping(1)).0);
 }
 
 // 0x14
@@ -2388,7 +2388,7 @@ fn compare(emulator: &mut Emulator, value: u8) {
 fn undefined(emulator: &mut Emulator) {
   emulator.registers.pc -= 1;
   let instruction = emulator.memory.read_byte(emulator.registers.pc);
-  panic!("Unknown instruction: {}", instruction);
+  panic!("Unknown instruction: {:02X}", instruction);
   // TODO: Print registers
   // TODO: Quit
 }

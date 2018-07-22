@@ -186,9 +186,9 @@ impl Gpu {
             && sx + x < 160
             && ((!sprite.get_priority()) != 0 || (!scan_line_row[(sx + x) as usize]) != 0) {
             let colour = if sprite.get_h_flip() != 0 {
-              self.tiles[((sprite.tile * 8 * 8) + (tile_row * 8) + (7 - x)) as usize]
+              self.tiles[(sprite.tile as usize * 8 * 8) + (tile_row as usize * 8) + (7 - x as usize)]
             } else {
-              self.tiles[((sprite.tile * 8 * 8) + (tile_row * 8) + x) as usize]
+              self.tiles[(sprite.tile as usize * 8 * 8) + (tile_row as usize * 8) + x as usize]
             };
             if colour != 0 {
               let sprite_colour = self.sprite_palette[(palette_offset + colour) as usize];
@@ -228,3 +228,10 @@ impl Gpu {
     target.finish().unwrap();
   }
 }
+
+#[derive(Clone, Copy)]
+struct Vertex {
+  position: [f32; 2],
+}
+
+implement_vertex!(Vertex, position);
