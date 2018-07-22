@@ -6,4 +6,6 @@ authors = ["Tomasz Mikus <mikus.tomasz@gmail.com>"]
 [dependencies]
 glium = "0.22.0"
 glutin = "0.17.0"
+num-derive = "0.2.0"
+num-traits = "0.2.0"
 rand = "0.5.4"

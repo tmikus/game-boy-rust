@@ -10,13 +10,13 @@ use {
   std::ptr,
 };
 
-const CART_SIZE: usize = 0x8000;
-const SRAM_SIZE: usize = 0x2000;
-const IO_SIZE: usize = 0x100;
-const VRAM_SIZE: usize = 0x2000;
-const OAM_SIZE: usize = 0x100;
-const WRAM_SIZE: usize = 0x2000;
-const HRAM_SIZE: usize = 0x80;
+pub const CART_SIZE: usize = 0x8000;
+pub const SRAM_SIZE: usize = 0x2000;
+pub const IO_SIZE: usize = 0x100;
+pub const VRAM_SIZE: usize = 0x2000;
+pub const OAM_SIZE: usize = 0x100;
+pub const WRAM_SIZE: usize = 0x2000;
+pub const HRAM_SIZE: usize = 0x80;
 
 pub struct Memory {
   pub emulator: *mut Emulator,

@@ -1,5 +1,8 @@
 extern crate glium;
 extern crate glutin;
+extern crate num_traits;
+#[macro_use]
+extern crate num_derive;
 extern crate rand;
 
 mod core;
@@ -8,6 +11,7 @@ use {
   core::{
     emulator::Emulator,
     keys::Keys,
+    rom::load_rom,
   },
 };
 
@@ -21,6 +25,8 @@ fn main() {
   let gl_window = glutin::GlWindow::new(window, context, &events_loop).unwrap();
   let mut closed = false;
   let mut emulator = Emulator::new();
+  let metadata = load_rom(&mut emulator, String::from("C:\\Users\\tmikus\\Projects\\tetris.gb"));
+  println!("Loaded \"{}\"", metadata.name);
   while !closed {
     // TODO: Enable the emulator once the ROM is loaded
     // emulator.run_tick();
