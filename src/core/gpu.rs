@@ -6,7 +6,10 @@ use {
     sprite::Sprite,
   },
   glium::{Display, Surface},
-  std::ptr,
+  std::{
+    num::Wrapping,
+    ptr,
+  },
 };
 
 const GPU_BG_ENABLE: u8 = 1 << 0;
@@ -44,7 +47,7 @@ pub struct Gpu {
   pub scroll_y: u8,
   pub sprite_palette: [Colour; 4 * 2],
   pub ticks: u64,
-  pub tiles: [u8; 8 * 8 * 384],
+  pub tiles: [u8; 384 * 8 * 8],
 }
 
 impl Gpu {
@@ -53,7 +56,7 @@ impl Gpu {
       background_palette: PALETTE,
       control: 0,
       emulator: ptr::null_mut(),
-      frame_buffer: [Colour::new(0, 0, 0); 160 * 144],
+      frame_buffer: [Colour::new(255, 255, 255); 160 * 144],
       last_cpu_ticks: 0,
       mode: GpuMode::HBlank,
       scan_line: 0,
@@ -72,6 +75,28 @@ impl Gpu {
       ticks: 0,
       tiles: [0; 384 * 8 * 8],
     }
+  }
+
+  pub fn reset(&mut self) {
+    self.control = 0;
+    self.scroll_x = 0;
+    self.scroll_y = 0;
+    self.scan_line = 0;
+    self.ticks = 0;
+    self.last_cpu_ticks = 0;
+    self.mode = GpuMode::HBlank;
+    self.frame_buffer = [Colour::new(255, 255, 255); 160 * 144];
+    self.background_palette = PALETTE;
+    self.sprite_palette = [
+      PALETTE[0],
+      PALETTE[1],
+      PALETTE[2],
+      PALETTE[3],
+      PALETTE[0],
+      PALETTE[1],
+      PALETTE[2],
+      PALETTE[3],
+    ];
   }
 
   pub fn run_tick(&mut self) {
@@ -112,6 +137,7 @@ impl Gpu {
       GpuMode::VRAM => {
         if self.ticks >= 172 {
           self.mode = GpuMode::HBlank;
+          self.render_scan_line();
           self.ticks -= 172;
         }
       },
@@ -129,7 +155,7 @@ impl Gpu {
     let mut line_offset = self.scroll_x >> 3;
     let mut x = self.scroll_x & 7;
     let y = (self.scan_line + self.scroll_y) & 7;
-    let pixel_offset = self.scan_line * 160;
+    let pixel_offset = (self.scan_line as u16) * 160;
     let mut tile = emulator.memory.vram[(map_offset + line_offset as u16) as usize] as u16;
     let mut scan_line_row = [0u8; 160];
     for i in 0..160 {
@@ -145,11 +171,11 @@ impl Gpu {
     }
     for i in 0..40 {
       let sprite = Sprite::from_array(&emulator.memory.oam, i);
-      let sx = sprite.x - 8;
-      let sy = sprite.y - 16;
+      let sx = (Wrapping(sprite.x) - Wrapping(8)).0;
+      let sy = (Wrapping(sprite.y) - Wrapping(16)).0;
       if sy <= self.scan_line && (sy + 8) > self.scan_line {
         let palette_offset = sprite.get_palette() * 4;
-        let pixel_offset = self.scan_line * 160 + sx;
+        let pixel_offset = pixel_offset + sx as u16;
         let tile_row = if sprite.get_v_flip() != 0 {
           7 - (self.scan_line - sy)
         } else {

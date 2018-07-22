@@ -1,3 +1,5 @@
+#![feature(int_to_from_bytes)]
+
 extern crate glium;
 extern crate num_traits;
 #[macro_use]
@@ -13,6 +15,7 @@ use {
     rom::load_rom,
   },
   glium::{glutin, Surface},
+  std::{thread, time},
 };
 
 fn main() {
@@ -25,10 +28,14 @@ fn main() {
   let display = glium::Display::new(window, context, &events_loop).unwrap();
   let mut closed = false;
   let mut emulator = Emulator::new();
+  emulator.init();
   let metadata = load_rom(&mut emulator, String::from("C:\\Users\\tmikus\\Projects\\tetris.gb"));
+//  let metadata = load_rom(&mut emulator, String::from("C:\\Users\\tmikus\\Projects\\01-special.gb"));
+  emulator.reset();
   println!("Loaded \"{}\"", metadata.name);
   while !closed {
     emulator.run_tick(&display);
+//    thread::sleep(time::Duration::from_millis(500));
     events_loop.poll_events(|ev| {
       match ev {
         glutin::Event::WindowEvent { event, .. } => match event {

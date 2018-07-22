@@ -20,28 +20,28 @@ pub struct Emulator {
 
 impl Emulator {
   pub fn new() -> Emulator {
-    let mut emulator = Emulator {
+    Emulator {
       cpu: Cpu::new(),
       gpu: Gpu::new(),
       interrupt: Interrupt::new(),
       memory: Memory::new(),
       registers: Registers::new(),
-    };
-    emulator.cpu.emulator = &mut emulator;
-    emulator.gpu.emulator = &mut emulator;
-    emulator.interrupt.emulator = &mut emulator;
-    emulator.memory.emulator = &mut emulator;
-    emulator
+    }
+  }
+
+  pub fn init(&mut self) {
+    self.cpu.emulator = self;
+    self.gpu.emulator = self;
+    self.interrupt.emulator = self;
+    self.memory.emulator = self;
   }
 
   pub fn reset(&mut self) {
-    self.cpu = Cpu::new();
-    self.cpu.emulator = self;
-    self.interrupt = Interrupt::new();
-    self.interrupt.emulator = self;
-    self.memory = Memory::new();
-    self.memory.emulator = self;
-    self.registers = Registers::new();
+    self.cpu.reset();
+    self.gpu.reset();
+    self.interrupt.reset();
+    self.memory.reset();
+    self.registers.reset();
   }
 
   pub fn run_tick(&mut self, display: &Display) {
