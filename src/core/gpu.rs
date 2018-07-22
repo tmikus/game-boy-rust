@@ -5,12 +5,30 @@ use {
     interrupt::INTERRUPT_VBLANK,
     sprite::Sprite,
   },
-  glium::{Display, Surface},
+  glium::{
+    index::{
+      NoIndices,
+      PrimitiveType,
+    },
+    uniforms::EmptyUniforms,
+    Display,
+    Program,
+    Surface,
+    VertexBuffer,
+  },
   std::{
     num::Wrapping,
     ptr,
   },
 };
+
+
+#[derive(Clone, Copy)]
+struct Vertex {
+  position: [f32; 2],
+}
+
+implement_vertex!(Vertex, position);
 
 const GPU_BG_ENABLE: u8 = 1 << 0;
 const GPU_SPRITE_ENABLE: u8 = 1 << 1;
@@ -222,16 +240,39 @@ impl Gpu {
     }
   }
 
-  pub fn draw_frame_buffer(&mut self, display: &Display) {
+  pub fn draw_frame_buffer(&mut self, display: Display) {
     let mut target = display.draw();
     target.clear_color(0.0, 0.0, 0.0, 1.0);
+
+    let shape = vec![
+      Vertex { position: [-1.0, -1.0] },
+      Vertex { position: [-1.0, 1.0] },
+      Vertex { position: [1.0, 1.0] },
+    ];
+    let vertex_buffer = VertexBuffer::new(&display, &shape).unwrap();
+    let indices = NoIndices(PrimitiveType::TrianglesList);
+    let vertex_shader_src = r#"
+      #version 140
+
+      in vec2 position;
+
+      void main() {
+        gl_Position = vec4(position, 0.0, 1.0);
+      }
+    "#;
+    let fragment_shader_src = r#"
+      #version 140
+
+      out vec4 color;
+
+      void main() {
+        color = vec4(1.0, 0.0, 0.0, 1.0);
+      }
+    "#;
+    let program = Program::from_source(&display, vertex_shader_src, fragment_shader_src, None).unwrap();
+    target.draw(&vertex_buffer, &indices, &program, &EmptyUniforms, &Default::default()).unwrap();
+
     target.finish().unwrap();
   }
 }
 
-#[derive(Clone, Copy)]
-struct Vertex {
-  position: [f32; 2],
-}
-
-implement_vertex!(Vertex, position);

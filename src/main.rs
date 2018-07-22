@@ -34,7 +34,7 @@ fn main() {
   emulator.reset();
   println!("Loaded \"{}\"", metadata.name);
   while !closed {
-    emulator.run_tick(&display);
+    emulator.run_tick(display.clone());
 //    thread::sleep(time::Duration::from_millis(500));
     events_loop.poll_events(|ev| {
       match ev {

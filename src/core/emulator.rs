@@ -44,7 +44,7 @@ impl Emulator {
     self.registers.reset();
   }
 
-  pub fn run_tick(&mut self, display: &Display) {
+  pub fn run_tick(&mut self, display: Display) {
     self.cpu.run_tick();
     self.gpu.run_tick();
     self.interrupt.run_tick(display);

@@ -33,7 +33,7 @@ impl Interrupt {
     self.flags = 0;
   }
 
-  pub fn run_tick(&mut self, display: &Display) {
+  pub fn run_tick(&mut self, display: Display) {
     if self.master == 0 || self.enable == 0 || self.flags == 0 {
       return;
     }
@@ -98,7 +98,7 @@ impl Interrupt {
     emulator.cpu.ticks += 12;
   }
 
-  fn vblank(&mut self, display: &Display) {
+  fn vblank(&mut self, display: Display) {
     let emulator = unsafe { &mut *self.emulator };
     emulator.gpu.draw_frame_buffer(display);
     self.master = 0;
