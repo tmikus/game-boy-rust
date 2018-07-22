@@ -10,6 +10,7 @@ use {
       NoIndices,
       PrimitiveType,
     },
+    texture::{RawImage2d, Texture2d},
     uniforms::EmptyUniforms,
     Display,
     Program,
@@ -26,9 +27,10 @@ use {
 #[derive(Clone, Copy)]
 struct Vertex {
   position: [f32; 2],
+  texture_coordinates: [f32; 2],
 }
 
-implement_vertex!(Vertex, position);
+implement_vertex!(Vertex, position, texture_coordinates);
 
 const GPU_BG_ENABLE: u8 = 1 << 0;
 const GPU_SPRITE_ENABLE: u8 = 1 << 1;
@@ -248,12 +250,12 @@ impl Gpu {
 
   pub fn init(&mut self, display: Display) {
     let shape = vec![
-      Vertex { position: [-1.0, -1.0] },
-      Vertex { position: [-1.0, 1.0] },
-      Vertex { position: [1.0, 1.0] },
-      Vertex { position: [-1.0, -1.0] },
-      Vertex { position: [1.0, 1.0] },
-      Vertex { position: [1.0, -1.0] },
+      Vertex { position: [-1.0, -1.0], texture_coordinates: [0.0, 0.0] },
+      Vertex { position: [-1.0, 1.0], texture_coordinates: [0.0, 1.0] },
+      Vertex { position: [1.0, 1.0], texture_coordinates: [1.0, 1.0] },
+      Vertex { position: [-1.0, -1.0], texture_coordinates: [0.0, 0.0] },
+      Vertex { position: [1.0, 1.0], texture_coordinates: [1.0, 1.0] },
+      Vertex { position: [1.0, -1.0], texture_coordinates: [1.0, 0.0] },
     ];
     self.vertex_buffer = Some(VertexBuffer::new(&display, &shape).unwrap());
     self.indices = Some(NoIndices(PrimitiveType::TrianglesList));
@@ -261,18 +263,24 @@ impl Gpu {
       #version 140
 
       in vec2 position;
+      in vec2 texture_coordinates;
+      out vec2 v_texture_coordinates;
 
       void main() {
+        v_texture_coordinates = texture_coordinates;
         gl_Position = vec4(position, 0.0, 1.0);
       }
     "#;
     let fragment_shader_src = r#"
       #version 140
 
+      in vec2 v_texture_coordinates;
       out vec4 color;
 
+      uniform sampler2D tex;
+
       void main() {
-        color = vec4(1.0, 0.0, 0.0, 1.0);
+        color = texture(tex, v_texture_coordinates);
       }
     "#;
     self.program = Some(Program::from_source(&display, vertex_shader_src, fragment_shader_src, None).unwrap());
@@ -285,8 +293,28 @@ impl Gpu {
     let vertex_buffer = self.vertex_buffer.as_ref().unwrap();
     let indices = self.indices.as_ref().unwrap();
     let program = self.program.as_ref().unwrap();
+    let mut colours: Vec<u8> = vec![];
+    for y in (0..160).rev() {
+      let y_offset = y * 144;
+      for x in 0..144 {
+        let colour = &self.frame_buffer[y_offset + x];
+        colours.push(colour.r);
+        colours.push(colour.g);
+        colours.push(colour.b);
+      }
+    }
+//    for colour in self.frame_buffer.iter() {
+//      colours.push(colour.r);
+//      colours.push(colour.g);
+//      colours.push(colour.b);
+//    }
+    let image = RawImage2d::from_raw_rgb(colours, (160, 144));
+    let texture = Texture2d::new(&display, image).unwrap();
+    let uniforms = uniform! {
+      tex: &texture,
+    };
 
-    target.draw(vertex_buffer, indices, program, &EmptyUniforms, &Default::default()).unwrap();
+    target.draw(vertex_buffer, indices, program, &uniforms, &Default::default()).unwrap();
 
     target.finish().unwrap();
   }
