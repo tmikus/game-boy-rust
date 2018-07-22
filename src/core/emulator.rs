@@ -7,6 +7,7 @@ use {
     memory::Memory,
     registers::Registers,
   },
+  glium::Display,
 };
 
 pub struct Emulator {
@@ -35,6 +36,7 @@ impl Emulator {
       registers: Registers::new(),
     };
     emulator.cpu.emulator = &mut emulator;
+    emulator.gpu.emulator = &mut emulator;
     emulator.interrupt.emulator = &mut emulator;
     emulator.memory.emulator = &mut emulator;
     emulator
@@ -50,9 +52,9 @@ impl Emulator {
     self.registers = Registers::new();
   }
 
-  pub fn run_tick(&mut self) {
+  pub fn run_tick(&mut self, display: &Display) {
     self.cpu.run_tick();
     self.gpu.run_tick();
-    self.interrupt.run_tick();
+    self.interrupt.run_tick(display);
   }
 }

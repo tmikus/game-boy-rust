@@ -1,5 +1,4 @@
 extern crate glium;
-extern crate glutin;
 extern crate num_traits;
 #[macro_use]
 extern crate num_derive;
@@ -13,6 +12,7 @@ use {
     keys::Keys,
     rom::load_rom,
   },
+  glium::{glutin, Surface},
 };
 
 fn main() {
@@ -22,14 +22,13 @@ fn main() {
     .with_dimensions(glutin::dpi::LogicalSize::new(640.0, 640.0))
     .with_resizable(false);
   let context = glutin::ContextBuilder::new();
-  let gl_window = glutin::GlWindow::new(window, context, &events_loop).unwrap();
+  let display = glium::Display::new(window, context, &events_loop).unwrap();
   let mut closed = false;
   let mut emulator = Emulator::new();
   let metadata = load_rom(&mut emulator, String::from("C:\\Users\\tmikus\\Projects\\tetris.gb"));
   println!("Loaded \"{}\"", metadata.name);
   while !closed {
-    // TODO: Enable the emulator once the ROM is loaded
-    // emulator.run_tick();
+    emulator.run_tick(&display);
     events_loop.poll_events(|ev| {
       match ev {
         glutin::Event::WindowEvent { event, .. } => match event {

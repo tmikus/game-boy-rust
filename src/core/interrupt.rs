@@ -1,5 +1,6 @@
 use {
   core::emulator::Emulator,
+  glium::Display,
   std::ptr,
 };
 
@@ -32,14 +33,14 @@ impl Interrupt {
     self.flags = 0;
   }
 
-  pub fn run_tick(&mut self) {
+  pub fn run_tick(&mut self, display: &Display) {
     if self.master == 0 || self.enable == 0 || self.flags == 0 {
       return;
     }
     let enabled_flags = self.enable & self.flags;
     if (enabled_flags & INTERRUPT_VBLANK) != 0 {
       self.flags &= !INTERRUPT_VBLANK;
-      self.vblank();
+      self.vblank(display);
     }
     if (enabled_flags & INTERRUPT_LCDSTAT) != 0 {
       self.flags &= !INTERRUPT_LCDSTAT;
@@ -97,10 +98,10 @@ impl Interrupt {
     emulator.cpu.ticks += 12;
   }
 
-  fn vblank(&mut self) {
-    // TODO: Implement the `drawFramebuffer()` or `VIDEO_WaitVSync()`
-    self.master = 0;
+  fn vblank(&mut self, display: &Display) {
     let emulator = unsafe { &mut *self.emulator };
+    emulator.gpu.draw_frame_buffer(display);
+    self.master = 0;
     emulator.memory.write_short_to_stack(emulator.registers.pc);
     emulator.registers.pc = 0x40;
     emulator.cpu.ticks += 12;

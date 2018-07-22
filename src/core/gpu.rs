@@ -5,6 +5,7 @@ use {
     interrupt::INTERRUPT_VBLANK,
     sprite::Sprite,
   },
+  glium::{Display, Surface},
   std::ptr,
 };
 
@@ -193,5 +194,11 @@ impl Gpu {
       };
       self.tiles[(tile * 64 + y * 8 + x) as usize] = first_bit + second_bit;
     }
+  }
+
+  pub fn draw_frame_buffer(&mut self, display: &Display) {
+    let mut target = display.draw();
+    target.clear_color(0.0, 0.0, 0.0, 1.0);
+    target.finish().unwrap();
   }
 }
