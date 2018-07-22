@@ -52,6 +52,12 @@ pub struct RomMetadata {
   pub rom_type: RomType,
 }
 
+impl RomMetadata {
+  pub fn print(&self) {
+    println!("Loaded \"{}\"", self.name);
+  }
+}
+
 pub fn load_rom(emulator: &mut Emulator, rom_path: String) -> RomMetadata {
   if !Path::new(&rom_path).exists() {
     panic!("ROM file does not exist: {}", rom_path);

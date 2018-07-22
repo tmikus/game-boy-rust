@@ -66,6 +66,9 @@ pub struct Gpu {
   pub sprite_palette: [Colour; 4 * 2],
   pub ticks: u64,
   pub tiles: [u8; 384 * 8 * 8],
+  vertex_buffer: Option<VertexBuffer<Vertex>>,
+  indices: Option<NoIndices>,
+  program: Option<Program>,
 }
 
 impl Gpu {
@@ -92,6 +95,9 @@ impl Gpu {
       ],
       ticks: 0,
       tiles: [0; 384 * 8 * 8],
+      vertex_buffer: None,
+      indices: None,
+      program: None,
     }
   }
 
@@ -240,17 +246,17 @@ impl Gpu {
     }
   }
 
-  pub fn draw_frame_buffer(&mut self, display: Display) {
-    let mut target = display.draw();
-    target.clear_color(0.0, 0.0, 0.0, 1.0);
-
+  pub fn init(&mut self, display: Display) {
     let shape = vec![
       Vertex { position: [-1.0, -1.0] },
       Vertex { position: [-1.0, 1.0] },
       Vertex { position: [1.0, 1.0] },
+      Vertex { position: [-1.0, -1.0] },
+      Vertex { position: [1.0, 1.0] },
+      Vertex { position: [1.0, -1.0] },
     ];
-    let vertex_buffer = VertexBuffer::new(&display, &shape).unwrap();
-    let indices = NoIndices(PrimitiveType::TrianglesList);
+    self.vertex_buffer = Some(VertexBuffer::new(&display, &shape).unwrap());
+    self.indices = Some(NoIndices(PrimitiveType::TrianglesList));
     let vertex_shader_src = r#"
       #version 140
 
@@ -269,8 +275,18 @@ impl Gpu {
         color = vec4(1.0, 0.0, 0.0, 1.0);
       }
     "#;
-    let program = Program::from_source(&display, vertex_shader_src, fragment_shader_src, None).unwrap();
-    target.draw(&vertex_buffer, &indices, &program, &EmptyUniforms, &Default::default()).unwrap();
+    self.program = Some(Program::from_source(&display, vertex_shader_src, fragment_shader_src, None).unwrap());
+  }
+
+  pub fn draw_frame_buffer(&mut self, display: Display) {
+    let mut target = display.draw();
+    target.clear_color(0.0, 0.0, 0.0, 1.0);
+
+    let vertex_buffer = self.vertex_buffer.as_ref().unwrap();
+    let indices = self.indices.as_ref().unwrap();
+    let program = self.program.as_ref().unwrap();
+
+    target.draw(vertex_buffer, indices, program, &EmptyUniforms, &Default::default()).unwrap();
 
     target.finish().unwrap();
   }

@@ -31,8 +31,9 @@ fn main() {
   emulator.init();
   let metadata = load_rom(&mut emulator, String::from("C:\\Users\\tmikus\\Projects\\tetris.gb"));
 //  let metadata = load_rom(&mut emulator, String::from("C:\\Users\\tmikus\\Projects\\01-special.gb"));
+  metadata.print();
   emulator.reset();
-  println!("Loaded \"{}\"", metadata.name);
+  emulator.gpu.init(display.clone());
   while !closed {
     emulator.run_tick(display.clone());
 //    thread::sleep(time::Duration::from_millis(500));
