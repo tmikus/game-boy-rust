@@ -30,7 +30,7 @@ fn main() {
   let mut emulator = Emulator::new();
   emulator.init();
   let metadata = load_rom(&mut emulator, String::from("C:\\Users\\tmikus\\Projects\\tetris.gb"));
-  // let metadata = load_rom(&mut emulator, String::from("C:\\Users\\tmikus\\Projects\\01-special.gb"));
+//   let metadata = load_rom(&mut emulator, String::from("C:\\Users\\tmikus\\Projects\\01-special.gb"));
   metadata.print();
   emulator.reset();
   emulator.gpu.init(display.clone());

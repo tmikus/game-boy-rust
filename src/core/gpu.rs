@@ -188,7 +188,7 @@ impl Gpu {
     let mut line_offset = self.scroll_x >> 3;
     let mut x = self.scroll_x & 7;
     let y = (self.scan_line + self.scroll_y) & 7;
-    let pixel_offset = (self.scan_line as u16) * 160;
+    let mut pixel_offset = (self.scan_line as u16) * 160;
     let mut tile = emulator.memory.vram[(map_offset + line_offset as u16) as usize] as u16;
     let mut scan_line_row = [0u8; 160];
     for i in 0..160 {
@@ -201,6 +201,7 @@ impl Gpu {
         line_offset = (line_offset + 1) & 31;
         tile = emulator.memory.vram[(map_offset + line_offset as u16) as usize] as u16;
       }
+      pixel_offset += 1;
     }
     for i in 0..40 {
       let sprite = Sprite::from_array(&emulator.memory.oam, i);
@@ -301,20 +302,15 @@ impl Gpu {
     let indices = self.indices.as_ref().unwrap();
     let program = self.program.as_ref().unwrap();
     let mut colours: Vec<u8> = vec![];
-    for y in (0..160).rev() {
-      let y_offset = y * 144;
-      for x in 0..144 {
+    for y in (0..144).rev() {
+      let y_offset = y * 160;
+      for x in 0..160 {
         let colour = &self.frame_buffer[y_offset + x];
         colours.push(colour.r);
         colours.push(colour.g);
         colours.push(colour.b);
       }
     }
-//    for colour in self.frame_buffer.iter() {
-//      colours.push(colour.r);
-//      colours.push(colour.g);
-//      colours.push(colour.b);
-//    }
     let image = RawImage2d::from_raw_rgb(colours, (160, 144));
     let texture = Texture2d::new(&display, image).unwrap();
     let uniforms = uniform! {
