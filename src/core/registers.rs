@@ -36,14 +36,24 @@ pub struct Registers {
 impl Registers {
   pub fn new() -> Registers {
     Registers {
-      a: 0x11,
-      f: 0x80,
+//      a: 0x11,
+//      f: 0x80,
+//      b: 0x00,
+//      c: 0x00,
+//      d: 0xFF,
+//      e: 0x56,
+//      h: 0x00,
+//      l: 0x0D,
+//      sp: 0xfffe,
+//      pc: 0x100,
+      a: 0x01,
+      f: 0xb0,
       b: 0x00,
-      c: 0x00,
-      d: 0xFF,
-      e: 0x56,
-      h: 0x00,
-      l: 0x0D,
+      c: 0x13,
+      d: 0x00,
+      e: 0xd8,
+      h: 0x01,
+      l: 0x4d,
       sp: 0xfffe,
       pc: 0x100,
     }
@@ -62,14 +72,24 @@ impl Registers {
   }
 
   pub fn reset(&mut self) {
-    self.a = 0x11;
-    self.f = 0x80;
+//    self.a = 0x11;
+//    self.f = 0x80;
+//    self.b = 0x00;
+//    self.c = 0x00;
+//    self.d = 0xFF;
+//    self.e = 0x56;
+//    self.h = 0x00;
+//    self.l = 0x0D;
+//    self.sp = 0xfffe;
+//    self.pc = 0x100;
+    self.a = 0x01;
+    self.f = 0xb0;
     self.b = 0x00;
-    self.c = 0x00;
-    self.d = 0xFF;
-    self.e = 0x56;
-    self.h = 0x00;
-    self.l = 0x0D;
+    self.c = 0x13;
+    self.d = 0x00;
+    self.e = 0xd8;
+    self.h = 0x01;
+    self.l = 0x4d;
     self.sp = 0xfffe;
     self.pc = 0x100;
   }

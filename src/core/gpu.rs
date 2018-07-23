@@ -205,15 +205,15 @@ impl Gpu {
     }
     for i in 0..40 {
       let sprite = Sprite::from_array(&emulator.memory.oam, i);
-      let sx = (Wrapping(sprite.x) - Wrapping(8)).0;
-      let sy = (Wrapping(sprite.y) - Wrapping(16)).0;
-      if sy <= self.scan_line && (sy + 8) > self.scan_line {
+      let sx = sprite.x as i32 - 8;
+      let sy = sprite.y as i32 - 16;
+      if sy <= self.scan_line as i32 && (sy + 8) > self.scan_line as i32 {
         let palette_offset = sprite.get_palette() * 4;
-        let pixel_offset = pixel_offset + sx as u16;
+        let mut pixel_offset = (self.scan_line as i32 * 160) + sx;
         let tile_row = if sprite.get_v_flip() != 0 {
-          7 - (self.scan_line - sy)
+          7 - (self.scan_line as i32 - sy)
         } else {
-          self.scan_line - sy
+          self.scan_line as i32 - sy
         };
         for x in 0..8 {
           if  sx + x >= 0
@@ -228,6 +228,7 @@ impl Gpu {
               let sprite_colour = self.sprite_palette[(palette_offset + colour) as usize];
               self.frame_buffer[pixel_offset as usize] = sprite_colour;
             }
+            pixel_offset += 1;
           }
         }
       }

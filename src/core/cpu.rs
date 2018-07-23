@@ -650,7 +650,7 @@ fn rlca(emulator: &mut Emulator) {
     emulator.registers.clear_flag(FLAG_CARRY);
   }
   emulator.registers.a <<= 1;
-  emulator.registers.a += 1;
+  emulator.registers.a += carry;
   emulator.registers.clear_flag(FLAG_NEGATIVE | FLAG_ZERO | FLAG_HALF_CARRY);
 }
 
@@ -675,7 +675,7 @@ fn ld_a_bcp(emulator: &mut Emulator) {
 // 0x0B
 fn dec_bc(emulator: &mut Emulator) {
   let bc = emulator.registers.get_bc();
-  emulator.registers.set_bc(bc - 1);
+  emulator.registers.set_bc((Wrapping(bc) - Wrapping(1)).0);
 }
 
 // 0x0C
@@ -787,7 +787,7 @@ fn ld_a_dep(emulator: &mut Emulator) {
 // 0x1B
 fn dec_de(emulator: &mut Emulator) {
   let de = emulator.registers.get_de();
-  emulator.registers.set_de(de - 1);
+  emulator.registers.set_de((Wrapping(de) - Wrapping(1)).0);
 }
 
 // 0x1C
@@ -844,7 +844,7 @@ fn ld_hl_nn(emulator: &mut Emulator) {
 // 0x22
 fn ldi_hlp_a(emulator: &mut Emulator) {
   let hl = emulator.registers.get_hl();
-  emulator.registers.set_hl(hl + 1);
+  emulator.registers.set_hl((Wrapping(hl) + Wrapping(1)).0);
   emulator.memory.write_byte(hl, emulator.registers.a);
 }
 
@@ -923,13 +923,13 @@ fn add_hl_hl(emulator: &mut Emulator) {
 // 0x2A
 fn ldi_a_hlp(emulator: &mut Emulator) {
   let hl = emulator.registers.get_hl();
-  emulator.registers.set_hl(hl + 1);
+  emulator.registers.set_hl((Wrapping(hl) + Wrapping(1)).0);
   emulator.registers.a = emulator.memory.read_byte(hl);
 }
 
 // 0x2B
 fn dec_hl(emulator: &mut Emulator) {
-  let hl_minus_one = emulator.registers.get_hl() - 1;
+  let hl_minus_one = (Wrapping(emulator.registers.get_hl()) - Wrapping(1)).0;
   emulator.registers.set_hl(hl_minus_one);
 }
 
@@ -958,10 +958,11 @@ fn cpl(emulator: &mut Emulator) {
 
 // 0x30
 fn jr_nc_n(emulator: &mut Emulator) {
+  let value = emulator.cpu.read_next_byte() as u16;
   if emulator.registers.is_flag_set(FLAG_CARRY) {
     emulator.cpu.ticks += 8;
   } else {
-    emulator.registers.pc += emulator.cpu.read_next_byte() as u16;
+    emulator.registers.pc += value;
     // TODO: Debug JUMP
     emulator.cpu.ticks += 12;
   }
@@ -2249,7 +2250,7 @@ fn add_byte(emulator: &mut Emulator, left: u8, right: u8) -> u8 {
 }
 
 fn add_short(emulator: &mut Emulator, left: u16, right: u16) -> u16 {
-  let result = (Wrapping(left as u32) + Wrapping(right as u32)).0;
+  let result = (left as u32) + (right as u32);
   if (result & 0xFFFF0000) != 0 {
     emulator.registers.set_flag(FLAG_CARRY);
   } else {
@@ -2284,12 +2285,12 @@ fn subtract(emulator: &mut Emulator, value: u8) {
 
 fn add_with_carry(emulator: &mut Emulator, value: u8) {
   let value = if emulator.registers.is_flag_set(FLAG_CARRY) {
-    value as u16 + 1
+    (Wrapping(value) + Wrapping(1)).0
   } else {
-    value as u16
+    value
   };
-  let a = emulator.registers.a as u16;
-  let result = a + value;
+  let a = emulator.registers.a;
+  let result = a as u16 + value as u16;
   if (result & 0xFF00) != 0 {
     emulator.registers.set_flag(FLAG_CARRY);
   } else {
@@ -2311,11 +2312,11 @@ fn add_with_carry(emulator: &mut Emulator, value: u8) {
 
 fn subtract_with_carry(emulator: &mut Emulator, value: u8) {
   let value = if emulator.registers.is_flag_set(FLAG_CARRY) {
-    value as u16 + 1
+    (Wrapping(value) + Wrapping(1)).0
   } else {
-    value as u16
+    value
   };
-  let a = emulator.registers.a as u16;
+  let a = emulator.registers.a;
   emulator.registers.set_flag(FLAG_NEGATIVE);
   if value > a {
     emulator.registers.set_flag(FLAG_CARRY);
@@ -2332,7 +2333,7 @@ fn subtract_with_carry(emulator: &mut Emulator, value: u8) {
   } else {
     emulator.registers.clear_flag(FLAG_HALF_CARRY);
   }
-  emulator.registers.a = (Wrapping(a) - Wrapping(value)).0 as u8;
+  emulator.registers.a = (Wrapping(a) - Wrapping(value)).0;
 }
 
 fn and(emulator: &mut Emulator, value: u8) {
@@ -2388,9 +2389,8 @@ fn compare(emulator: &mut Emulator, value: u8) {
 fn undefined(emulator: &mut Emulator) {
   emulator.registers.pc -= 1;
   let instruction = emulator.memory.read_byte(emulator.registers.pc);
+  emulator.registers.print_registers();
   panic!("Unknown instruction: {:02X}", instruction);
-  // TODO: Print registers
-  // TODO: Quit
 }
 
 fn return_from_interrupt(emulator: &mut Emulator) {

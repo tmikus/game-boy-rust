@@ -264,6 +264,7 @@ impl Memory {
   pub fn write_short_to_stack(&mut self, value: u16) {
     let emulator = unsafe { &mut *self.emulator };
     if emulator.registers.sp < 2 {
+      emulator.registers.print_registers();
       panic!("Stack overflow exception.");
     }
     emulator.registers.sp -= 2;
