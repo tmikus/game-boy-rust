@@ -184,24 +184,25 @@ impl Gpu {
     } else {
       0x1800
     };
-    map_offset += (((self.scan_line as u16 + self.scroll_y as u16) & 0xFF) >> 3) << 5;
-    let mut line_offset = self.scroll_x >> 3;
+    map_offset += (((self.scan_line as u16 + self.scroll_y as u16) & 255) >> 3) << 5;
+    let mut line_offset = self.scroll_x as u16 >> 3;
     let mut x = self.scroll_x & 7;
-    let y = (Wrapping(self.scan_line) + Wrapping(self.scroll_y)).0 & 7;
+//    let y = (Wrapping(self.scan_line) + Wrapping(self.scroll_y)).0 & 7;
+    let y = (self.scan_line + self.scroll_y) & 7;
     let mut pixel_offset = (self.scan_line as u16) * 160;
-    let mut tile = emulator.memory.vram[(map_offset + line_offset as u16) as usize] as u16;
+    let mut tile = emulator.memory.vram[(map_offset + line_offset) as usize] as u16;
     let mut scan_line_row = [0u8; 160];
     for i in 0..160 {
-      let colour = self.tiles[((tile * 8 * 8) + (y as u16 * 8) + x as u16) as usize];
+      let colour = self.tiles[((tile * 64) + (y as u16 * 8) + x as u16) as usize];
       scan_line_row[i] = colour;
       self.frame_buffer[pixel_offset as usize] = self.background_palette[colour as usize];
       x += 1;
+      pixel_offset += 1;
       if x == 8 {
         x = 0;
         line_offset = (line_offset + 1) & 31;
-        tile = emulator.memory.vram[(map_offset + line_offset as u16) as usize] as u16;
+        tile = emulator.memory.vram[(map_offset + line_offset) as usize] as u16;
       }
-      pixel_offset += 1;
     }
     for i in 0..40 {
       let sprite = Sprite::from_array(&emulator.memory.oam, i);
@@ -220,9 +221,9 @@ impl Gpu {
             && sx + x < 160
             && ((!sprite.get_priority()) != 0 || (!scan_line_row[(sx + x) as usize]) != 0) {
             let colour = if sprite.get_h_flip() != 0 {
-              self.tiles[(sprite.tile as usize * 8 * 8) + (tile_row as usize * 8) + (7 - x as usize)]
+              self.tiles[(sprite.tile as usize * 64) + (tile_row as usize * 8) + (7 - x as usize)]
             } else {
-              self.tiles[(sprite.tile as usize * 8 * 8) + (tile_row as usize * 8) + x as usize]
+              self.tiles[(sprite.tile as usize * 64) + (tile_row as usize * 8) + x as usize]
             };
             if colour != 0 {
               let sprite_colour = self.sprite_palette[(palette_offset + colour) as usize];
@@ -243,15 +244,15 @@ impl Gpu {
     let mut bit_index: u8;
     for x in 0..8 {
       bit_index = 1 << (7 - x);
-      let first_bit = if (emulator.memory.vram[address as usize] & bit_index) != 0 {
-        1u8
+      let first_bit: u8 = if (emulator.memory.vram[address as usize] & bit_index) != 0 {
+        1
       } else {
-        0u8
+        0
       };
-      let second_bit = if (emulator.memory.vram[(address + 1) as usize] & bit_index) != 0 {
-        2u8
+      let second_bit: u8 = if (emulator.memory.vram[(address + 1) as usize] & bit_index) != 0 {
+        2
       } else {
-        0u8
+        0
       };
       self.tiles[(tile * 64 + y * 8 + x) as usize] = first_bit + second_bit;
     }

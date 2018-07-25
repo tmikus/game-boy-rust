@@ -2138,7 +2138,7 @@ fn rst_30(emulator: &mut Emulator) {
 // 0xF8
 fn ld_hl_sp_n(emulator: &mut Emulator) {
   let operand = i8::from_bytes([emulator.cpu.read_next_byte()]);
-  let result: u32 = (emulator.registers.sp as i32 + operand as i32) as u32;
+  let result: u32 = (Wrapping(emulator.registers.sp as i32) + Wrapping(operand as i32)).0 as u32;
   if result & 0xFFFF0000 != 0 {
     emulator.registers.set_flag(FLAG_CARRY);
   } else {
@@ -2229,7 +2229,7 @@ fn increment(emulator: &mut Emulator, value: u8) -> u8 {
 }
 
 fn add_byte(emulator: &mut Emulator, left: u8, right: u8) -> u8 {
-  let result = (left as u16) + (right as u16);
+  let result = (Wrapping(left as u16) + Wrapping(right as u16)).0;
   if (result & 0xFF00) != 0 {
     emulator.registers.set_flag(FLAG_CARRY);
   } else {
@@ -2251,7 +2251,7 @@ fn add_byte(emulator: &mut Emulator, left: u8, right: u8) -> u8 {
 }
 
 fn add_short(emulator: &mut Emulator, left: u16, right: u16) -> u16 {
-  let result = (left as u32) + (right as u32);
+  let result = (Wrapping(left as u32) + Wrapping(right as u32)).0;
   if (result & 0xFFFF0000) != 0 {
     emulator.registers.set_flag(FLAG_CARRY);
   } else {
@@ -2281,7 +2281,6 @@ fn subtract(emulator: &mut Emulator, value: u8) {
     emulator.registers.clear_flag(FLAG_HALF_CARRY);
   }
   emulator.registers.a = (Wrapping(a) - Wrapping(value)).0;
-
 }
 
 fn add_with_carry(emulator: &mut Emulator, value: u8) {
@@ -2291,7 +2290,7 @@ fn add_with_carry(emulator: &mut Emulator, value: u8) {
     value
   };
   let a = emulator.registers.a;
-  let result = a as u16 + value as u16;
+  let result = (Wrapping(a as u16) + Wrapping(value as u16)).0;
   if (result & 0xFF00) != 0 {
     emulator.registers.set_flag(FLAG_CARRY);
   } else {
@@ -2379,7 +2378,7 @@ fn compare(emulator: &mut Emulator, value: u8) {
   } else {
     emulator.registers.clear_flag(FLAG_CARRY);
   }
-  if value & 0x0F > emulator.registers.a & 0x0F {
+  if (value & 0x0F) > (emulator.registers.a & 0x0F) {
     emulator.registers.set_flag(FLAG_HALF_CARRY);
   } else {
     emulator.registers.clear_flag(FLAG_HALF_CARRY);
