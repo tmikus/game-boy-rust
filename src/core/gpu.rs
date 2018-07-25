@@ -187,7 +187,7 @@ impl Gpu {
     map_offset += (((self.scan_line as u16 + self.scroll_y as u16) & 0xFF) >> 3) << 5;
     let mut line_offset = self.scroll_x >> 3;
     let mut x = self.scroll_x & 7;
-    let y = (self.scan_line + self.scroll_y) & 7;
+    let y = (Wrapping(self.scan_line) + Wrapping(self.scroll_y)).0 & 7;
     let mut pixel_offset = (self.scan_line as u16) * 160;
     let mut tile = emulator.memory.vram[(map_offset + line_offset as u16) as usize] as u16;
     let mut scan_line_row = [0u8; 160];

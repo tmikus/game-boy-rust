@@ -595,7 +595,7 @@ fn rlc_hlp(emulator: &mut Emulator) {
   let hl = emulator.registers.get_hl();
   let hl_value = emulator.memory.read_byte(hl);
   let result = rlc(emulator, hl_value);
-  emulator.memory.write_byte(emulator.registers.get_hl(), result);
+  emulator.memory.write_byte(hl, result);
 }
 
 // 0x07
@@ -645,7 +645,7 @@ fn rrc_hlp(emulator: &mut Emulator) {
   let hl = emulator.registers.get_hl();
   let hl_value = emulator.memory.read_byte(hl);
   let result = rrc(emulator, hl_value);
-  emulator.memory.write_byte(emulator.registers.get_hl(), result);
+  emulator.memory.write_byte(hl, result);
 }
 
 // 0x0F
@@ -695,7 +695,7 @@ fn rl_hlp(emulator: &mut Emulator) {
   let hl = emulator.registers.get_hl();
   let hl_value = emulator.memory.read_byte(hl);
   let result = rl(emulator, hl_value);
-  emulator.memory.write_byte(emulator.registers.get_hl(), result);
+  emulator.memory.write_byte(hl, result);
 }
 
 // 0x17
@@ -745,7 +745,7 @@ fn rr_hlp(emulator: &mut Emulator) {
   let hl = emulator.registers.get_hl();
   let hl_value = emulator.memory.read_byte(hl);
   let result = rr(emulator, hl_value);
-  emulator.memory.write_byte(emulator.registers.get_hl(), result);
+  emulator.memory.write_byte(hl, result);
 }
 
 // 0x1F
@@ -795,7 +795,7 @@ fn sla_hlp(emulator: &mut Emulator) {
   let hl = emulator.registers.get_hl();
   let hl_value = emulator.memory.read_byte(hl);
   let result = sla(emulator, hl_value);
-  emulator.memory.write_byte(emulator.registers.get_hl(), result);
+  emulator.memory.write_byte(hl, result);
 }
 
 // 0x27
@@ -845,7 +845,7 @@ fn sra_hlp(emulator: &mut Emulator) {
   let hl = emulator.registers.get_hl();
   let hl_value = emulator.memory.read_byte(hl);
   let result = sra(emulator, hl_value);
-  emulator.memory.write_byte(emulator.registers.get_hl(), result);
+  emulator.memory.write_byte(hl, result);
 }
 
 // 0x2F
@@ -895,7 +895,7 @@ fn swap_hlp(emulator: &mut Emulator) {
   let hl = emulator.registers.get_hl();
   let hl_value = emulator.memory.read_byte(hl);
   let result = swap(emulator, hl_value);
-  emulator.memory.write_byte(emulator.registers.get_hl(), result);
+  emulator.memory.write_byte(hl, result);
 }
 
 // 0x37
@@ -945,7 +945,7 @@ fn srl_hlp(emulator: &mut Emulator) {
   let hl = emulator.registers.get_hl();
   let hl_value = emulator.memory.read_byte(hl);
   let result = srl(emulator, hl_value);
-  emulator.memory.write_byte(emulator.registers.get_hl(), result);
+  emulator.memory.write_byte(hl, result);
 }
 
 // 0x3F
@@ -2170,7 +2170,7 @@ fn sla(emulator: &mut Emulator, value: u8) -> u8 {
   } else {
     emulator.registers.clear_flag(FLAG_CARRY);
   }
-  let result = value << 0;
+  let result = value << 1;
   if result != 0 {
     emulator.registers.clear_flag(FLAG_ZERO);
   } else {

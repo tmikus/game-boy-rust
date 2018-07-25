@@ -31,13 +31,13 @@ fn main() {
   emulator.init();
   let metadata = load_rom(&mut emulator, String::from("C:\\Users\\tmikus\\Projects\\tetris.gb"));
 //   let metadata = load_rom(&mut emulator, String::from("C:\\Users\\tmikus\\Projects\\01-special.gb"));
-//   let metadata = load_rom(&mut emulator, String::from("C:\\Users\\tmikus\\Projects\\02-interrupts.gb"));
+//  let metadata = load_rom(&mut emulator, String::from("C:\\Users\\tmikus\\Projects\\02-interrupts.gb"));
   metadata.print();
   emulator.reset();
   emulator.gpu.init(display.clone());
   while !closed {
     emulator.run_tick(display.clone());
-//    thread::sleep(time::Duration::from_millis(500));
+//    thread::sleep(time::Duration::from_millis(200));
     events_loop.poll_events(|ev| {
       match ev {
         glutin::Event::WindowEvent { event, .. } => match event {
@@ -61,7 +61,7 @@ fn main() {
                   emulator.memory.keys.set_start(true);
                   emulator.cpu.stopped = false;
                 },
-                Some(glutin::VirtualKeyCode::Return) => {
+                Some(glutin::VirtualKeyCode::Back) => {
                   emulator.memory.keys.set_select(true);
                   emulator.cpu.stopped = false;
                 },

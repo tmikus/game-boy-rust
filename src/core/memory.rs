@@ -177,7 +177,9 @@ impl Memory {
   }
 
   pub fn read_short(&self, address: u16) -> u16 {
-    self.read_byte(address) as u16 | (self.read_byte(address + 1) as u16) << 8
+    let first = self.read_byte(address) as u16;
+    let second = self.read_byte(address + 1) as u16;
+    first | (second << 8)
   }
 
   pub fn read_short_from_stack(&self) -> u16 {

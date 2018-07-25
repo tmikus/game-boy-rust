@@ -11,6 +11,7 @@ use {
     },
   },
   std::{
+    collections::VecDeque,
     num::Wrapping,
     ptr,
     i8,
@@ -28,9 +29,9 @@ pub struct Cpu {
 impl Cpu {
   pub fn new() -> Cpu {
     Cpu {
-      emulator: ptr::null_mut(),
       extended_instructions: cpu_cb::get_instructions(),
       instructions: get_instructions(),
+      emulator: ptr::null_mut(),
       stopped: false,
       ticks: 0,
     }
@@ -767,7 +768,7 @@ fn rla(emulator: &mut Emulator) {
 // 0x18
 fn jr_n(emulator: &mut Emulator) {
   let value = i8::from_bytes([emulator.cpu.read_next_byte()]);
-  emulator.registers.pc = (emulator.registers.pc as i32 + value as i32) as u16;
+  emulator.registers.pc = (Wrapping(emulator.registers.pc as i32) + Wrapping(value as i32)).0 as u16;
   // TODO: Debug JUMP
 }
 
@@ -830,7 +831,7 @@ fn jr_nz_n(emulator: &mut Emulator) {
   if emulator.registers.is_flag_set(FLAG_ZERO) {
     emulator.cpu.ticks += 8;
   } else {
-    emulator.registers.pc = (emulator.registers.pc as i32 + operand as i32) as u16;
+    emulator.registers.pc = (Wrapping(emulator.registers.pc as i32) + Wrapping(operand as i32)).0 as u16;
     // TODO: Debug JUMP
     emulator.cpu.ticks += 12;
   }
@@ -850,7 +851,7 @@ fn ldi_hlp_a(emulator: &mut Emulator) {
 
 // 0x23
 fn inc_hl(emulator: &mut Emulator) {
-  let hl_plus_one = emulator.registers.get_hl() + 1;
+  let hl_plus_one = (Wrapping(emulator.registers.get_hl()) + Wrapping(1)).0;
   emulator.registers.set_hl(hl_plus_one);
 }
 
@@ -876,17 +877,17 @@ fn daa(emulator: &mut Emulator) {
   let mut a: u16 = emulator.registers.a as u16;
   if emulator.registers.is_flag_set(FLAG_NEGATIVE) {
     if emulator.registers.is_flag_set(FLAG_HALF_CARRY) {
-      a = (a - 0x06) & 0xFF;
+      a = (Wrapping(a) - Wrapping(0x06)).0 & 0xFF;
     }
     if emulator.registers.is_flag_set(FLAG_CARRY) {
-      a -= 0x60;
+      a = (Wrapping(a) - Wrapping(0x60)).0;
     }
   } else {
     if emulator.registers.is_flag_set(FLAG_HALF_CARRY) || (a & 0xF) > 9 {
-      a += 0x06;
+      a = (Wrapping(a) + Wrapping(0x06)).0;
     }
     if emulator.registers.is_flag_set(FLAG_CARRY) || a > 0x9F {
-      a += 0x60;
+      a = (Wrapping(a) + Wrapping(0x60)).0;
     }
   }
   emulator.registers.a = (a & 0xFF) as u8;
@@ -905,7 +906,7 @@ fn daa(emulator: &mut Emulator) {
 fn jr_z_n(emulator: &mut Emulator) {
   let value = i8::from_bytes([emulator.cpu.read_next_byte()]);
   if emulator.registers.is_flag_set(FLAG_ZERO) {
-    emulator.registers.pc = (emulator.registers.pc as i32 + value as i32) as u16;
+    emulator.registers.pc = (Wrapping(emulator.registers.pc as i32) + Wrapping(value as i32)).0 as u16;
     // TODO: Debug JMP
     emulator.cpu.ticks += 12;
   } else {
@@ -958,11 +959,11 @@ fn cpl(emulator: &mut Emulator) {
 
 // 0x30
 fn jr_nc_n(emulator: &mut Emulator) {
-  let value = emulator.cpu.read_next_byte() as u16;
+  let value = i8::from_bytes([emulator.cpu.read_next_byte()]);
   if emulator.registers.is_flag_set(FLAG_CARRY) {
     emulator.cpu.ticks += 8;
   } else {
-    emulator.registers.pc += value;
+    emulator.registers.pc = (Wrapping(emulator.registers.pc as i32) + Wrapping(value as i32)).0 as u16;
     // TODO: Debug JUMP
     emulator.cpu.ticks += 12;
   }
@@ -1017,9 +1018,9 @@ fn scf(emulator: &mut Emulator) {
 
 // 0x38
 fn jr_c_n(emulator: &mut Emulator) {
-  let operand = emulator.cpu.read_next_byte();
+  let value = i8::from_bytes([emulator.cpu.read_next_byte()]);
   if emulator.registers.is_flag_set(FLAG_CARRY) {
-    emulator.registers.pc += operand as u16;
+    emulator.registers.pc = (Wrapping(emulator.registers.pc as i32) + Wrapping(value as i32)).0 as u16;
     emulator.cpu.ticks += 12;
   } else {
     emulator.cpu.ticks += 8;
@@ -1036,7 +1037,7 @@ fn add_hl_sp(emulator: &mut Emulator) {
 
 // 0x3A
 fn ldd_a_hlp(emulator: &mut Emulator) {
-  let hl_minus_one = emulator.registers.get_hl() - 1;
+  let hl_minus_one = (Wrapping(emulator.registers.get_hl()) - Wrapping(1)).0;
   emulator.registers.set_hl(hl_minus_one);
   emulator.registers.a = emulator.memory.read_byte(hl_minus_one);
 }
@@ -2056,15 +2057,15 @@ fn rst_20(emulator: &mut Emulator) {
 
 // 0xE8
 fn add_sp_n(emulator: &mut Emulator) {
-  let operand = emulator.cpu.read_next_byte() as u16;
-  let result: u32 = (emulator.registers.sp as u32) + operand as u32;
+  let value = i8::from_bytes([emulator.cpu.read_next_byte()]);
+  let result: u32 = (Wrapping(emulator.registers.sp as i32) + Wrapping(value as i32)).0 as u32;
   if result & 0xFFFF0000 != 0 {
     emulator.registers.set_flag(FLAG_CARRY);
   } else {
     emulator.registers.clear_flag(FLAG_CARRY);
   }
   emulator.registers.sp = (result & 0xFFFF) as u16;
-  if (emulator.registers.sp & 0x0F) + (operand & 0x0F) > 0x0F {
+  if (emulator.registers.sp & 0x0F) + (value as u16 & 0x0F) > 0x0F {
     emulator.registers.set_flag(FLAG_HALF_CARRY);
   } else {
     emulator.registers.clear_flag(FLAG_HALF_CARRY);
