@@ -18,6 +18,10 @@ use {
   },
 };
 
+fn msb(value: u8) -> bool {
+  value & 0x80 != 0
+}
+
 pub struct Cpu {
   pub emulator: *mut Emulator,
   pub extended_instructions: [Instruction; 256],
@@ -644,14 +648,18 @@ fn ld_b_n(emulator: &mut Emulator) {
 
 // 0x07
 fn rlca(emulator: &mut Emulator) {
-  let carry = (emulator.registers.a & 0x80) >> 7;
-  if carry != 0 {
+  let carry = if emulator.registers.is_flag_set(FLAG_CARRY) {
+    1
+  } else {
+    0
+  };
+  if msb(emulator.registers.a) {
     emulator.registers.set_flag(FLAG_CARRY);
   } else {
     emulator.registers.clear_flag(FLAG_CARRY);
   }
   emulator.registers.a <<= 1;
-  emulator.registers.a += carry;
+  emulator.registers.a |= carry;
   emulator.registers.clear_flag(FLAG_NEGATIVE | FLAG_ZERO | FLAG_HALF_CARRY);
 }
 
@@ -821,7 +829,7 @@ fn rra(emulator: &mut Emulator) {
     emulator.registers.clear_flag(FLAG_CARRY);
   }
   emulator.registers.a >>= 1;
-  emulator.registers.a += carry;
+  emulator.registers.a |= carry;
   emulator.registers.clear_flag(FLAG_NEGATIVE | FLAG_ZERO | FLAG_HALF_CARRY);
 }
 

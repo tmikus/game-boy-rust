@@ -2197,7 +2197,7 @@ fn sra(emulator: &mut Emulator, value: u8) -> u8 {
 }
 
 fn swap(emulator: &mut Emulator, value: u8) -> u8 {
-  let result = (value & 0xF) << 4 | (value & 0xF0) >> 4;
+  let result = (value & 0x0F) << 4 | (value & 0xF0) >> 4;
   if result != 0 {
     emulator.registers.clear_flag(FLAG_ZERO);
   } else {
