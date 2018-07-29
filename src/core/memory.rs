@@ -8,7 +8,6 @@ use {
   },
   rand,
   std::{
-    num::Wrapping,
     ptr,
   },
 };

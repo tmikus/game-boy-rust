@@ -130,15 +130,27 @@ impl Registers {
     self.l = (value & 0x00FF) as u8;
   }
 
-  pub fn clear_flag(&mut self, flag: u8) {
-    self.f &= !flag;
+  pub fn decrement_hl(&mut self) -> u16 {
+    let hl = self.get_hl();
+    self.set_hl(hl.wrapping_sub(1));
+    hl
   }
 
-  pub fn is_flag_set(&self, flag: u8) -> bool {
-    (self.f & flag) != 0
+  pub fn increment_hl(&mut self) -> u16 {
+    let hl = self.get_hl();
+    self.set_hl(hl.wrapping_add(1));
+    hl
   }
 
-  pub fn set_flag(&mut self, flag: u8) {
-    self.f |= flag;
+  pub fn get_flags(&self, flags: u8) -> bool {
+    self.f & flags > 0
+  }
+
+  pub fn set_flags(&mut self, flags: u8, value: bool) {
+    match value {
+      true => self.f |= flags,
+      false => self.f &= !flags,
+    }
+    self.f &= 0xF0;
   }
 }

@@ -1,5 +1,12 @@
 use {
   core::{
+    cpu::{
+      rl,
+      rlc,
+      rr,
+      rrc,
+      srl_flag_update,
+    },
     emulator::Emulator,
     instruction::Instruction,
     registers::{ FLAG_CARRY, FLAG_HALF_CARRY, FLAG_NEGATIVE, FLAG_ZERO }
@@ -2090,147 +2097,37 @@ fn set_7_a(emulator: &mut Emulator) {
   emulator.registers.a = set(emulator, 1 << 7, a);
 }
 
-fn rlc(emulator: &mut Emulator, value: u8) -> u8 {
-  let carry = (value & 0x80) >> 7;
-  if value & 0x80 != 0 {
-    emulator.registers.set_flag(FLAG_CARRY);
-  } else {
-    emulator.registers.clear_flag(FLAG_CARRY);
-  }
-  let result = (value << 1) + carry;
-  if result != 0 {
-    emulator.registers.clear_flag(FLAG_ZERO);
-  } else {
-    emulator.registers.set_flag(FLAG_ZERO);
-  }
-  emulator.registers.clear_flag(FLAG_NEGATIVE | FLAG_HALF_CARRY);
-  result
-}
-
-fn rrc(emulator: &mut Emulator, value: u8) -> u8 {
-  let carry = value & 0x01;
-  let mut result = value >> 1;
-  if carry != 0 {
-    emulator.registers.set_flag(FLAG_CARRY);
-    result |= 0x80;
-  } else {
-    emulator.registers.clear_flag(FLAG_CARRY);
-  }
-  if result != 0 {
-    emulator.registers.clear_flag(FLAG_ZERO);
-  } else {
-    emulator.registers.set_flag(FLAG_ZERO);
-  }
-  emulator.registers.clear_flag(FLAG_NEGATIVE | FLAG_HALF_CARRY);
-  result
-}
-
-fn rl(emulator: &mut Emulator, value: u8) -> u8 {
-  let carry = if emulator.registers.is_flag_set(FLAG_CARRY) {
-    1
-  } else {
-    0
-  };
-  if value & 0x80 != 0 {
-    emulator.registers.set_flag(FLAG_CARRY);
-  } else {
-    emulator.registers.clear_flag(FLAG_CARRY);
-  }
-  let result = (value << 1) + carry;
-  if result != 0 {
-    emulator.registers.clear_flag(FLAG_ZERO);
-  } else {
-    emulator.registers.set_flag(FLAG_ZERO);
-  }
-  emulator.registers.clear_flag(FLAG_NEGATIVE | FLAG_HALF_CARRY);
-  result
-}
-
-fn rr(emulator: &mut Emulator, value: u8) -> u8 {
-  let mut result = value >> 1;
-  if emulator.registers.is_flag_set(FLAG_CARRY) {
-    result |= 0x80;
-  }
-  if result & 0x01 != 0 {
-    emulator.registers.set_flag(FLAG_CARRY);
-  } else {
-    emulator.registers.clear_flag(FLAG_CARRY);
-  }
-  if result != 0 {
-    emulator.registers.clear_flag(FLAG_ZERO);
-  } else {
-    emulator.registers.set_flag(FLAG_ZERO);
-  }
-  result
-}
-
 fn sla(emulator: &mut Emulator, value: u8) -> u8 {
-  if value & 0x80 != 0 {
-    emulator.registers.set_flag(FLAG_CARRY);
-  } else {
-    emulator.registers.clear_flag(FLAG_CARRY);
-  }
+  let carry = value & 0x80 == 0x80;
   let result = value << 1;
-  if result != 0 {
-    emulator.registers.clear_flag(FLAG_ZERO);
-  } else {
-    emulator.registers.set_flag(FLAG_ZERO);
-  }
-  emulator.registers.clear_flag(FLAG_NEGATIVE | FLAG_HALF_CARRY);
-  result
+  srl_flag_update(emulator, result, carry);
+  return result;
 }
 
 fn sra(emulator: &mut Emulator, value: u8) -> u8 {
-  if value & 0x01 != 0 {
-    emulator.registers.set_flag(FLAG_CARRY);
-  } else {
-    emulator.registers.clear_flag(FLAG_CARRY);
-  }
-  let result = (value & 0x80) | (value >> 1);
-  if result != 0 {
-    emulator.registers.clear_flag(FLAG_ZERO);
-  } else {
-    emulator.registers.set_flag(FLAG_ZERO);
-  }
-  emulator.registers.clear_flag(FLAG_NEGATIVE | FLAG_HALF_CARRY);
-  result
-}
-
-fn swap(emulator: &mut Emulator, value: u8) -> u8 {
-  let result = (value & 0x0F) << 4 | (value & 0xF0) >> 4;
-  if result != 0 {
-    emulator.registers.clear_flag(FLAG_ZERO);
-  } else {
-    emulator.registers.set_flag(FLAG_ZERO);
-  }
-  emulator.registers.clear_flag(FLAG_NEGATIVE | FLAG_HALF_CARRY | FLAG_CARRY);
-  result
+  let carry = value & 0x01 == 0x01;
+  let result = (value >> 1) | (value & 0x80);
+  srl_flag_update(emulator, result, carry);
+  return result;
 }
 
 fn srl(emulator: &mut Emulator, value: u8) -> u8 {
-  if value & 0x01 != 0 {
-    emulator.registers.set_flag(FLAG_CARRY);
-  } else {
-    emulator.registers.clear_flag(FLAG_CARRY);
-  }
+  let carry = value & 0x01 == 0x01;
   let result = value >> 1;
-  if result != 0 {
-    emulator.registers.clear_flag(FLAG_ZERO);
-  } else {
-    emulator.registers.set_flag(FLAG_ZERO);
-  }
-  emulator.registers.clear_flag(FLAG_NEGATIVE | FLAG_HALF_CARRY);
-  result
+  srl_flag_update(emulator, result, carry);
+  return result;
+}
+
+fn swap(emulator: &mut Emulator, value: u8) -> u8 {
+  emulator.registers.set_flags(FLAG_ZERO, value == 0);
+  emulator.registers.set_flags(FLAG_NEGATIVE | FLAG_HALF_CARRY | FLAG_CARRY, false);
+  (value >> 4) | (value << 4)
 }
 
 fn bit(emulator: &mut Emulator, bit: u8, value: u8) {
-  if (value & bit) != 0 {
-    emulator.registers.clear_flag(FLAG_ZERO);
-  } else {
-    emulator.registers.set_flag(FLAG_ZERO);
-  }
-  emulator.registers.clear_flag(FLAG_NEGATIVE);
-  emulator.registers.set_flag(FLAG_HALF_CARRY);
+  emulator.registers.set_flags(FLAG_ZERO, (value & bit) == 0);
+  emulator.registers.set_flags(FLAG_NEGATIVE, false);
+  emulator.registers.set_flags(FLAG_HALF_CARRY, true);
 }
 
 fn set(emulator: &mut Emulator, bit: u8, value: u8) -> u8 {
