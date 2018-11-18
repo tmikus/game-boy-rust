@@ -24,9 +24,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="6d5ce8a0-a063-4ebd-9c21-530f266ed683" name="Default" comment="Improve the implementation of the CPU.">
+      <change beforePath="$PROJECT_DIR$/.idea/game-boy-rust.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/game-boy-rust.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/core/cpu.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/core/cpu.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/core/cpu_cb.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/core/cpu_cb.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/core/gpu.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/core/gpu.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/main.rs" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -38,45 +39,48 @@
     <session id="974707607">
       <usages-collector id="statistics.lifecycle.project">
         <counts>
-          <entry key="project.closed" value="4" />
-          <entry key="project.open.time.6" value="1" />
-          <entry key="project.open.time.7" value="3" />
+          <entry key="project.closed" value="14" />
+          <entry key="project.open.time.6" value="9" />
+          <entry key="project.open.time.7" value="5" />
           <entry key="project.open.time.8" value="1" />
-          <entry key="project.opened" value="5" />
+          <entry key="project.opened" value="15" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.extensions.open">
         <counts>
-          <entry key="rs" value="111" />
+          <entry key="rs" value="122" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.open">
         <counts>
-          <entry key="Rust" value="111" />
+          <entry key="Rust" value="122" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.extensions.edit">
         <counts>
-          <entry key="rs" value="10186" />
+          <entry key="rs" value="10527" />
           <entry key="txt" value="117" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.edit">
         <counts>
           <entry key="PLAIN_TEXT" value="117" />
-          <entry key="Rust" value="10186" />
+          <entry key="Rust" value="10527" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.js.language.service.starts" />
+      <usages-collector id="statistics.spring.boot.run.usages" />
+      <usages-collector id="statistics.spring.boot.mvc.usages" />
+      <usages-collector id="statistics.vcs.git.usages" />
     </session>
   </component>
   <component name="FileEditorManager">
     <leaf>
       <file pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/src/core/cpu.rs">
+        <entry file="file://$PROJECT_DIR$/src/main.rs">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="782">
-              <caret line="1945" column="34" selection-start-line="1945" selection-start-column="34" selection-end-line="1945" selection-end-column="34" />
+            <state relative-caret-position="666">
+              <caret line="37" column="42" selection-start-line="37" selection-start-column="42" selection-end-line="37" selection-end-column="42" />
             </state>
           </provider>
         </entry>
@@ -165,11 +169,11 @@
         <option value="$PROJECT_DIR$/src/core/rom.rs" />
         <option value="$PROJECT_DIR$/src/core/emulator.rs" />
         <option value="$PROJECT_DIR$/src/core/memory.rs" />
-        <option value="$PROJECT_DIR$/src/core/gpu.rs" />
         <option value="$PROJECT_DIR$/src/core/registers.rs" />
         <option value="$PROJECT_DIR$/src/core/cpu_cb.rs" />
-        <option value="$PROJECT_DIR$/src/main.rs" />
         <option value="$PROJECT_DIR$/src/core/cpu.rs" />
+        <option value="$PROJECT_DIR$/src/core/gpu.rs" />
+        <option value="$PROJECT_DIR$/src/main.rs" />
       </list>
     </option>
   </component>
@@ -180,7 +184,7 @@
     <sorting>DEFINITION_ORDER</sorting>
   </component>
   <component name="ProjectFrameBounds">
-    <option name="x" value="1912" />
+    <option name="x" value="-8" />
     <option name="width" value="1937" />
     <option name="height" value="2118" />
   </component>
@@ -196,7 +200,6 @@
     <panes>
       <pane id="PackagesPane" />
       <pane id="Scope" />
-      <pane id="AndroidView" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -209,12 +212,6 @@
               <item name="game-boy-rust" type="462c0819:PsiDirectoryNode" />
               <item name="src" type="462c0819:PsiDirectoryNode" />
             </path>
-            <path>
-              <item name="game-boy-rust" type="b2602c69:ProjectViewProjectNode" />
-              <item name="game-boy-rust" type="462c0819:PsiDirectoryNode" />
-              <item name="src" type="462c0819:PsiDirectoryNode" />
-              <item name="core" type="462c0819:PsiDirectoryNode" />
-            </path>
           </expand>
           <select />
         </subPane>
@@ -225,7 +222,7 @@
     <property name="SearchEverywhereHistoryKey" value="commit&#9;ACTION&#9;CheckinProject" />
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="aspect.path.notification.shown" value="true" />
-    <property name="com.android.tools.idea.instantapp.provision.ProvisionBeforeRunTaskProvider.myTimeStamp" value="1532860150923" />
+    <property name="com.android.tools.idea.instantapp.provision.ProvisionBeforeRunTaskProvider.myTimeStamp" value="1532874262409" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$/../../rboy" />
     <property name="org.rust.cargo.project.model.PROJECT_DISCOVERY" value="true" />
     <property name="settings.editor.selected.configurable" value="editing.templates" />
@@ -322,7 +319,17 @@
       <workItem from="1532532750224" duration="10938000" />
       <workItem from="1532773837932" duration="5501000" />
       <workItem from="1532857426004" duration="2823000" />
-      <workItem from="1532860292831" duration="11259000" />
+      <workItem from="1532860292831" duration="13021000" />
+      <workItem from="1532878201004" duration="627000" />
+      <workItem from="1532954266582" duration="2387000" />
+      <workItem from="1532979209771" duration="783000" />
+      <workItem from="1533028536102" duration="648000" />
+      <workItem from="1533477735484" duration="861000" />
+      <workItem from="1533480519954" duration="2328000" />
+      <workItem from="1537031085210" duration="633000" />
+      <workItem from="1542454064115" duration="1002000" />
+      <workItem from="1542476805432" duration="138000" />
+      <workItem from="1542548918460" duration="3195000" />
     </task>
     <task id="LOCAL-00001" summary="Implement most of memory handling.">
       <created>1531579092735</created>
@@ -646,17 +653,24 @@
       <option name="project" value="LOCAL" />
       <updated>1532865845917</updated>
     </task>
-    <option name="localTasksCounter" value="47" />
+    <task id="LOCAL-00047" summary="Improve the implementation of the CPU.">
+      <created>1532872196128</created>
+      <option name="number" value="00047" />
+      <option name="presentableId" value="LOCAL-00047" />
+      <option name="project" value="LOCAL" />
+      <updated>1532872196128</updated>
+    </task>
+    <option name="localTasksCounter" value="48" />
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="151347000" />
+    <option name="totallyTimeSpent" value="165711000" />
   </component>
   <component name="ToolWindowManager">
-    <frame x="1530" y="0" width="1549" height="1694" extended-state="0" />
+    <frame x="-6" y="0" width="1549" height="1694" extended-state="0" />
     <editor active="true" />
     <layout>
-      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.21237785" />
+      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.21237785" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Designer" order="2" />
       <window_info id="Image Layers" order="3" />
@@ -670,11 +684,11 @@
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
       <window_info anchor="bottom" id="TODO" order="6" />
-      <window_info anchor="bottom" id="Terminal" order="7" sideWeight="0.4986979" weight="0.2935606" />
+      <window_info anchor="bottom" id="Terminal" order="7" sideWeight="0.4986979" weight="0.2923567" />
       <window_info anchor="bottom" id="Docker" order="8" show_stripe_button="false" />
       <window_info anchor="bottom" id="Event Log" order="9" sideWeight="0.50130206" side_tool="true" weight="0.29471675" />
       <window_info anchor="bottom" id="Database Changes" order="10" show_stripe_button="false" />
-      <window_info active="true" anchor="bottom" id="Version Control" order="11" visible="true" weight="0.32891414" />
+      <window_info anchor="bottom" id="Version Control" order="11" weight="0.32891414" />
       <window_info anchor="bottom" id="TeamCity" order="12" />
       <window_info anchor="right" id="Commander" order="0" weight="0.4" />
       <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
@@ -838,6 +852,27 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/src/core/registers.rs">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="648">
+          <caret line="138" column="9" selection-start-line="138" selection-start-column="9" selection-end-line="138" selection-end-column="9" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/core/cpu.rs">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="34416">
+          <caret line="1951" column="33" selection-start-line="1951" selection-start-column="33" selection-end-line="1951" selection-end-column="33" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/core/cpu_cb.rs">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="498">
+          <caret line="2111" selection-start-line="2111" selection-end-line="2111" />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/src/core/emulator.rs">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="486">
@@ -847,43 +882,22 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/core/memory.rs">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="335">
-          <caret line="19" column="11" selection-start-line="19" selection-start-column="11" selection-end-line="19" selection-end-column="11" />
+        <state relative-caret-position="689">
+          <caret line="79" column="16" selection-start-line="79" selection-start-column="16" selection-end-line="79" selection-end-column="16" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/core/gpu.rs">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-2592">
-          <caret line="27" selection-start-line="27" selection-end-line="27" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/core/registers.rs">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="648">
-          <caret line="138" column="9" selection-start-line="138" selection-start-column="9" selection-end-line="138" selection-end-column="9" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/core/cpu_cb.rs">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="534">
-          <caret line="2113" column="5" selection-start-line="2113" selection-start-column="5" selection-end-line="2113" selection-end-column="5" />
+        <state relative-caret-position="414">
+          <caret line="158" column="10" selection-start-line="158" selection-start-column="10" selection-end-line="158" selection-end-column="10" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/main.rs">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="594">
-          <caret line="33" column="63" selection-start-line="33" selection-start-column="63" selection-end-line="33" selection-end-column="63" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/core/cpu.rs">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="782">
-          <caret line="1945" column="34" selection-start-line="1945" selection-start-column="34" selection-end-line="1945" selection-end-column="34" />
+        <state relative-caret-position="666">
+          <caret line="37" column="42" selection-start-line="37" selection-start-column="42" selection-end-line="37" selection-end-column="42" />
         </state>
       </provider>
     </entry>

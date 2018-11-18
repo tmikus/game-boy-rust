@@ -146,8 +146,8 @@ impl Gpu {
             self.mode = GpuMode::VBlank;
           } else {
             self.mode = GpuMode::OAM;
-            self.ticks -= 204;
           }
+          self.ticks -= 204;
         }
       },
       GpuMode::VBlank => {
@@ -156,7 +156,7 @@ impl Gpu {
           if self.scan_line > 153 {
             self.scan_line = 0;
             self.mode = GpuMode::OAM;
-          } 
+          }
           self.ticks -= 456;
         }
       },
@@ -178,13 +178,13 @@ impl Gpu {
 
   pub fn render_scan_line(&mut self) {
     let emulator = unsafe { &mut *self.emulator };
-    let mut map_offset: u16 = if (self.control & GPU_TILEMAP) != 0 {
+    let mut map_offset: i32 = if (self.control & GPU_TILEMAP) != 0 {
       0x1C00
     } else {
       0x1800
     };
-    map_offset += (((self.scan_line as u16 + self.scroll_y as u16) & 255) >> 3) << 5;
-    let mut line_offset = self.scroll_x as u16 >> 3;
+    map_offset += (((self.scan_line as i32 + self.scroll_y as i32) & 255) >> 3) << 5;
+    let mut line_offset = self.scroll_x as i32 >> 3;
     let mut x = self.scroll_x & 7;
 //    let y = (Wrapping(self.scan_line) + Wrapping(self.scroll_y)).0 & 7;
     let y = (self.scan_line + self.scroll_y) & 7;

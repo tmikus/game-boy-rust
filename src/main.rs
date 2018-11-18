@@ -18,6 +18,21 @@ use {
   std::{thread, time},
 };
 
+// Game Boy Cartridge pinout
+// GPIO 23 = PIN 13
+// GPIO 18 = ANALOG PIN 5
+// GPIO 24 = PIN 11
+// GPIO 25 = PIN 10
+// GPIO 12 = PIN 12
+// GPIO 17 = PIN 2
+// GPIO 27 = PIN 3
+// GPIO 22 = PIN 4
+// GPIO 5  = PIN 5
+// GPIO 6  = PIN 6
+// GPIO 13 = PIN 7
+// GPIO 19 = PIN 8
+// GPIO 26 = PIN 9
+
 fn main() {
   let mut events_loop = glutin::EventsLoop::new();
   let window = glutin::WindowBuilder::new()
