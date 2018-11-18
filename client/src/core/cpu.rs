@@ -1995,7 +1995,7 @@ fn rst_20(emulator: &mut Emulator) {
 
 // 0xE8
 fn add_sp_n(emulator: &mut Emulator) {
-  let value = i8::from_bytes([emulator.cpu.read_next_byte()]);
+  let value = i8::from_le_bytes([emulator.cpu.read_next_byte()]);
   let result: u32 = (emulator.registers.sp as i32).wrapping_add(value as i32) as u32;
   let sp = (result & 0xffff) as u16;
   emulator.registers.set_flags(FLAG_CARRY, result & 0xFFFF0000 != 0);
@@ -2068,7 +2068,7 @@ fn rst_30(emulator: &mut Emulator) {
 
 // 0xF8
 fn ld_hl_sp_n(emulator: &mut Emulator) {
-  let operand = i8::from_bytes([emulator.cpu.read_next_byte()]);
+  let operand = i8::from_le_bytes([emulator.cpu.read_next_byte()]);
   let sp = emulator.registers.sp;
   let result: u32 = (sp as i32).wrapping_add(operand as i32) as u32;
   emulator.registers.set_flags(FLAG_CARRY, result & 0xFFFF0000 != 0);
