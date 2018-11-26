@@ -1,9 +1,7 @@
-extern crate cupi;
-extern crate cupi_shift;
+extern crate rppal;
 
 use {
-  cupi::CuPi,
-  cupi_shift::Shifter,
+  rppal::gpio::{ Gpio, Level, Mode },
   std::{ thread, time },
 };
 
@@ -23,34 +21,21 @@ use {
 // GPIO 19 = PIN 8 = RB PIN 35
 // GPIO 26 = PIN 9 = RB PIN 37
 
-const LATCH_PIN_ID: usize = 22;
-const DATA_PIN_ID: usize = 18;
-const CLOCK_PIN_ID: usize = 32;
-const READ_PIN_ID: usize = 12;
-const WRITE_PIN_ID: usize = 16;
+const LATCH_PIN_ID: u64 = 22;
+const DATA_PIN_ID: u64 = 18;
+const CLOCK_PIN_ID: u64 = 32;
+const READ_PIN_ID: u64 = 12;
+const WRITE_PIN_ID: u64 = 16;
 
-const DATA_0_ID: usize = 11;
-const DATA_1_ID: usize = 13;
-const DATA_2_ID: usize = 15;
-const DATA_3_ID: usize = 29;
-const DATA_4_ID: usize = 31;
-const DATA_5_ID: usize = 33;
-const DATA_6_ID: usize = 35;
-const DATA_7_ID: usize = 37;
+const DATA_0_ID: u64 = 11;
+const DATA_1_ID: u64 = 13;
+const DATA_2_ID: u64 = 15;
+const DATA_3_ID: u64 = 29;
+const DATA_4_ID: u64 = 31;
+const DATA_5_ID: u64 = 33;
+const DATA_6_ID: u64 = 35;
+const DATA_7_ID: u64 = 37;
 
 fn main() {
-  let cupi = CuPi::new().unwrap();
-  let mut read_pin = cupi.pin(READ_PIN_ID).unwrap().output();
-  let mut write_pin = cupi.pin(WRITE_PIN_ID).unwrap().output();
-  let mut shifter = Shifter::new(DATA_PIN_ID, LATCH_PIN_ID, CLOCK_PIN_ID);
-  let mut data_pins = [
-    cupi.pin(DATA_0_ID).unwrap().input(),
-    cupi.pin(DATA_1_ID).unwrap().input(),
-    cupi.pin(DATA_2_ID).unwrap().input(),
-    cupi.pin(DATA_3_ID).unwrap().input(),
-    cupi.pin(DATA_4_ID).unwrap().input(),
-    cupi.pin(DATA_5_ID).unwrap().input(),
-    cupi.pin(DATA_6_ID).unwrap().input(),
-    cupi.pin(DATA_7_ID).unwrap().input(),
-  ];
+  let mut gpio = Gpio::new().unwrap();
 }
