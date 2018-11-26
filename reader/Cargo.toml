@@ -4,4 +4,5 @@ version = "0.1.0"
 authors = ["Tomasz Mikus <mikus.tomasz@gmail.com>"]
 
 [dependencies]
-rppal = "0.9"
+cupi = "0.1.0"
+cupi_shift = "0.1.0"
