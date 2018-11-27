@@ -64,13 +64,13 @@ impl<'a> Shifter<'a> {
       for number in 0..register.pins {
         self.gpio.write(self.clock_pin, Level::Low);
         if self.invert {
-          self.gpio.write(self.data_pin, match register.data >> n & 1 {
+          self.gpio.write(self.data_pin, match register.data >> number & 1 {
             1 => Level::Low,
             0 => Level::High,
             _ => unreachable!(),
           });
         } else {
-          self.gpio.write(self.data_pin, match register.data >> n & 1 {
+          self.gpio.write(self.data_pin, match register.data >> number & 1 {
             1 => Level::High,
             0 => Level::Low,
             _ => unreachable!(),
