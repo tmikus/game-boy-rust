@@ -144,8 +144,8 @@ fn main() {
   let mut shifter = Shifter::new(&gpio, DATA_PIN_ID, LATCH_PIN_ID, CLOCK_PIN_ID);
   shifter.add(8);
   shifter.add(8);
-  gpio.write(READ_PIN_ID, Level::Low);
-  gpio.write(WRITE_PIN_ID, Level::High);
+  gpio.write(READ_PIN_ID, Level::High);
+  gpio.write(WRITE_PIN_ID, Level::Low);
 
   // Read data
   let mut data: Vec<u8> = Vec::new();
