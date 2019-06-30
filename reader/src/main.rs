@@ -10,82 +10,6 @@ use {
   },
 };
 
-struct ShiftRegister {
-  data: usize,
-  pins: u8,
-}
-
-impl ShiftRegister {
-  fn set(&mut self, data: usize) {
-    self.data = data;
-  }
-}
-
-struct Shifter<'a> {
-  pub data_pin: u8,
-  pub latch_pin: u8,
-  pub clock_pin: u8,
-  gpio: &'a Gpio,
-  shift_registers: LinkedList<ShiftRegister>,
-  invert: bool,
-}
-
-impl<'a> Shifter<'a> {
-  pub fn new(gpio: &'a Gpio, data_pin: u8, latch_pin: u8, clock_pin: u8) -> Shifter {
-    Shifter {
-      data_pin,
-      latch_pin,
-      clock_pin,
-      gpio,
-      shift_registers: LinkedList::new(),
-      invert: false,
-    }
-  }
-
-  pub fn add(&mut self, pins: u8) -> usize {
-    let register = ShiftRegister { data: 0, pins };
-    self.shift_registers.push_back(register);
-    self.shift_registers.len() - 1
-  }
-
-  pub fn set(&mut self, register_index: usize, data: usize) {
-    for (index, register) in self.shift_registers.iter_mut().enumerate() {
-      if index == register_index {
-        register.set(data);
-        break;
-      }
-    }
-  }
-
-  pub fn invert(&mut self) {
-    self.invert = !self.invert;
-  }
-  
-  pub fn write(&mut self) {
-    self.gpio.write(self.latch_pin, Level::Low);
-    for register in self.shift_registers.iter() {
-      for number in 0..register.pins {
-        self.gpio.write(self.clock_pin, Level::Low);
-        if self.invert {
-          self.gpio.write(self.data_pin, match register.data >> number & 1 {
-            1 => Level::Low,
-            0 => Level::High,
-            _ => unreachable!(),
-          });
-        } else {
-          self.gpio.write(self.data_pin, match register.data >> number & 1 {
-            1 => Level::High,
-            0 => Level::Low,
-            _ => unreachable!(),
-          });
-        }
-        self.gpio.write(self.clock_pin, Level::High);
-      }
-    }
-    self.gpio.write(self.latch_pin, Level::High);
-  }
-}
-
 // Game Boy Cartridge pinout
 // GPIO 23 = PIN 13 = RB PIN 16
 // GPIO 18 = ANALOG PIN 5 = RB PIN 12
@@ -117,6 +41,19 @@ const DATA_5_ID: u8 = 33;
 const DATA_6_ID: u8 = 35;
 const DATA_7_ID: u8 = 37;
 
+fn shift_out(gpio: &Gpio, data_pin: u8, clock_pin: u8, value: u8) {
+  for number in (0..8).rev() {
+    gpio.write(clock_pin, Level::Low);
+    gpio.write(data_pin, match value >> number & 1 {
+      1 => Level::High,
+      0 => Level::Low,
+      _ => unreachable!(),
+    });
+    gpio.write(clock_pin, Level::High);
+//    sleep(Duration::from_micros(50));
+  }
+}
+
 fn main() {
   println!("Start reading");
   let mut gpio = Gpio::new().unwrap();
@@ -140,24 +77,22 @@ fn main() {
   for pin in data_pins.iter() {
     gpio.set_mode(pin.clone(), Mode::Input);
   }
-  // Initialise shifter
-  let mut shifter = Shifter::new(&gpio, DATA_PIN_ID, LATCH_PIN_ID, CLOCK_PIN_ID);
-  shifter.add(8);
-  shifter.add(8);
   gpio.write(READ_PIN_ID, Level::High);
   gpio.write(WRITE_PIN_ID, Level::Low);
 
   // Read data
   let mut data: Vec<u8> = Vec::new();
-  for addr in 0..= 0x3FFF {
-    shifter.set(0, addr >> 8);
-    shifter.set(1, addr & 0xFF);
-    shifter.write();
-    sleep(Duration::from_micros(50));
+//  for addr in 0..= 0x3FFF {
+  for addr in 0 ..= 0x100u16 {
+    gpio.write(LATCH_PIN_ID, Level::Low);
+    shift_out(&gpio, DATA_PIN_ID, CLOCK_PIN_ID, ((addr >> 8) as u8));
+    shift_out(&gpio, DATA_PIN_ID, CLOCK_PIN_ID, ((addr & 0xFF) as u8));
+    gpio.write(LATCH_PIN_ID, Level::High);
+    sleep(Duration::from_micros(100));
     let mut value = 0u8;
     for (bit, pin) in data_pins.iter().enumerate() {
       if gpio.read(pin.clone()).unwrap() == Level::High {
-        value |= 1 << bit;
+        value |= (1 << bit) as u8;
       }
     }
     data.push(value);
