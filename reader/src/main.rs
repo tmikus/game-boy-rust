@@ -50,7 +50,7 @@ fn shift_out(gpio: &Gpio, data_pin: u8, clock_pin: u8, value: u8) {
       _ => unreachable!(),
     });
     gpio.write(clock_pin, Level::High);
-//    sleep(Duration::from_micros(50));
+    sleep(Duration::from_micros(100));
   }
 }
 
