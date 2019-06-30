@@ -44,13 +44,15 @@ const DATA_7_ID: u8 = 37;
 fn shift_out(gpio: &Gpio, data_pin: u8, clock_pin: u8, value: u8) {
   for number in (0..8).rev() {
     gpio.write(clock_pin, Level::Low);
+    sleep(Duration::from_micros(50));
     gpio.write(data_pin, match value >> number & 1 {
       1 => Level::High,
       0 => Level::Low,
       _ => unreachable!(),
     });
+    sleep(Duration::from_micros(50));
     gpio.write(clock_pin, Level::High);
-    sleep(Duration::from_micros(100));
+    sleep(Duration::from_micros(50));
   }
 }
 
@@ -80,7 +82,7 @@ fn main() {
   gpio.write(READ_PIN_ID, Level::Low);
   gpio.write(WRITE_PIN_ID, Level::High);
 
-  sleep(Duration::from_micros(100));
+  sleep(Duration::from_micros(50));
 
   // Read data
   let mut data: Vec<u8> = Vec::new();
@@ -90,7 +92,7 @@ fn main() {
     shift_out(&gpio, DATA_PIN_ID, CLOCK_PIN_ID, ((addr >> 8) as u8));
     shift_out(&gpio, DATA_PIN_ID, CLOCK_PIN_ID, ((addr & 0xFF) as u8));
     gpio.write(LATCH_PIN_ID, Level::High);
-    sleep(Duration::from_micros(100));
+    sleep(Duration::from_micros(50));
     let mut value = 0u8;
     for (bit, pin) in data_pins.iter().enumerate() {
       if gpio.read(pin.clone()).unwrap() == Level::High {
