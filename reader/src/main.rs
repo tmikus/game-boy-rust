@@ -77,8 +77,10 @@ fn main() {
   for pin in data_pins.iter() {
     gpio.set_mode(pin.clone(), Mode::Input);
   }
-  gpio.write(READ_PIN_ID, Level::High);
-  gpio.write(WRITE_PIN_ID, Level::Low);
+  gpio.write(READ_PIN_ID, Level::Low);
+  gpio.write(WRITE_PIN_ID, Level::High);
+
+  sleep(Duration::from_micros(100));
 
   // Read data
   let mut data: Vec<u8> = Vec::new();
