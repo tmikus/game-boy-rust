@@ -26,6 +26,8 @@ use {
 // GPIO 19 = PIN 8 = RB PIN 35
 // GPIO 26 = PIN 9 = RB PIN 37
 
+const SLEEP: u64 = 50;
+
 const LATCH_PIN_ID: u8 = 22;
 const DATA_PIN_ID: u8 = 18;
 const CLOCK_PIN_ID: u8 = 32;
@@ -82,7 +84,7 @@ fn main() {
     }
     gpio.write(READ_PIN_ID, Level::Low);
     gpio.write(WRITE_PIN_ID, Level::High);
-    sleep(Duration::from_micros(50));
+    sleep(Duration::from_micros(SLEEP));
     let mut data: Vec<u8> = Vec::new();
     // Read the data from bank 0
     read_next_rom_bank(&gpio, &mut data, 0);
@@ -90,16 +92,17 @@ fn main() {
     println!("Banks count: {}", banks_count);
     for bank in 1..banks_count {
         println!("Reading bank {}..", bank);
-        select_rom_bank(&gpio, bank);
+        select_rom_bank(&mut gpio, bank);
         read_next_rom_bank(&gpio, &mut data, 0x4000);
     }
     fs::write("rom.dat", data);
     println!("Done");
 }
 
-fn get_banks_per_rom(data: &[u8]) -> u8 {
+fn get_banks_per_rom(data: &[u8]) -> u16 {
+    println!("Rom type: {:#04x}", data[0x0148]);
     match data[0x0148] {
-        0x00 => 0,
+        0x00 => 2,
         0x01 => 4,
         0x02 => 8,
         0x03 => 16,
@@ -117,7 +120,7 @@ fn get_banks_per_rom(data: &[u8]) -> u8 {
 fn read_next_rom_bank(gpio: &Gpio, data: &mut Vec<u8>, start_address: u16) {
     for address in start_address..=(start_address + 0x3FFF) {
         write_address(&gpio, address);
-        sleep(Duration::from_micros(50));
+        sleep(Duration::from_micros(SLEEP));
         let mut value = 0u8;
         for (bit, pin) in data_pins.iter().enumerate() {
             if gpio.read(pin.clone()).unwrap() == Level::High {
@@ -128,7 +131,7 @@ fn read_next_rom_bank(gpio: &Gpio, data: &mut Vec<u8>, start_address: u16) {
     }
 }
 
-fn select_rom_bank(gpio: &Gpio, bank: u8) {
+fn select_rom_bank(gpio: &mut Gpio, bank: u16) {
     gpio.write(READ_PIN_ID, Level::High);
     gpio.write(WRITE_PIN_ID, Level::Low);
     sleep(Duration::from_micros(5));
@@ -138,7 +141,7 @@ fn select_rom_bank(gpio: &Gpio, bank: u8) {
     write_address(&gpio, 0x2100);
     sleep(Duration::from_micros(5));
     for (index, pin) in data_pins.iter().enumerate() {
-        if (bank + 1) & (1 << index) != 0 {
+        if bank & (1 << index) != 0 {
             gpio.write(pin.clone(), Level::High);
         } else {
             gpio.write(pin.clone(), Level::Low);
@@ -146,8 +149,8 @@ fn select_rom_bank(gpio: &Gpio, bank: u8) {
     }
     sleep(Duration::from_micros(5));
     // Set back to reading ROM
-    digitalWrite(rdPin, LOW); // RD 0
-    digitalWrite(wrPin, HIGH); // WR 1
+    gpio.write(READ_PIN_ID, Level::Low);
+    gpio.write(WRITE_PIN_ID, Level::High);
     for pin in data_pins.iter() {
         gpio.write(pin.clone(), Level::Low);
         gpio.set_mode(pin.clone(), Mode::Input);
