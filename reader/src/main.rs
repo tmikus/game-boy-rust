@@ -1,5 +1,6 @@
 extern crate rppal;
 
+use std::io::Write;
 use {
     rppal::gpio::{Gpio, Level, Mode},
     std::{
@@ -95,7 +96,7 @@ fn main() {
         select_rom_bank(&mut gpio, bank);
         read_next_rom_bank(&gpio, &mut data, 0x4000);
     }
-    fs::write("rom.dat", data);
+    fs::write("rom.dat", data).unwrap();
     println!("Done");
 }
 
@@ -128,6 +129,7 @@ fn read_next_rom_bank(gpio: &Gpio, data: &mut Vec<u8>, start_address: u16) {
             }
         }
         print!("{:02X}", value);
+        std::io::stdout().flush().unwrap();
         data.push(value);
     }
 }
