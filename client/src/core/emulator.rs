@@ -1,6 +1,5 @@
 use {
   core::{
-    colour::Colour,
     cpu::Cpu,
     gpu::Gpu,
     interrupt::Interrupt,

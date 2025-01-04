@@ -11,7 +11,6 @@ use {
     },
   },
   std::{
-    collections::VecDeque,
     ptr,
     i8,
   },

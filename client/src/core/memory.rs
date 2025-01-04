@@ -2,8 +2,6 @@ use {
   core::{
     emulator::Emulator,
     gpu::PALETTE,
-    interrupt::Interrupt,
-    registers::Registers,
     keys::Keys,
   },
   rand,
@@ -54,7 +52,7 @@ impl Memory {
       self.write_byte(destination + i, byte);
     }
   }
-  
+
   pub fn reset(&mut self) {
     self.sram = [0; SRAM_SIZE];
     self.io = [
