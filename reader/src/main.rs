@@ -127,6 +127,7 @@ fn read_next_rom_bank(gpio: &Gpio, data: &mut Vec<u8>, start_address: u16) {
                 value |= (1 << bit) as u8;
             }
         }
+        print!("{:02X}", value);
         data.push(value);
     }
 }
