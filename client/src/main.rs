@@ -1,10 +1,3 @@
-use self::device::Device;
-use std::io::{self, Read};
-use std::sync::mpsc::{self, Receiver, SyncSender, TryRecvError, TrySendError};
-use std::thread;
-use glium::backend::glutin;
-use glium::winit::platform::pump_events::{EventLoopExtPumpEvents, PumpStatus};
-use glium::winit::window::WindowAttributes;
 pub use crate::keypad::KeypadKey;
 pub use crate::gpu::{SCREEN_W, SCREEN_H};
 pub use crate::sound::AudioPlayer;
@@ -24,6 +17,15 @@ mod sound;
 mod timer;
 
 pub type StrResult<T> = Result<T, &'static str>;
+
+use device::Device;
+use std::io::{self, Read};
+use std::sync::mpsc::{self, Receiver, SyncSender, TryRecvError, TrySendError};
+use std::sync::{Arc, Mutex};
+use std::thread;
+use cpal::traits::{HostTrait, DeviceTrait, StreamTrait};
+use cpal::{Sample, FromSample};
+use glium::winit::platform::pump_events::{EventLoopExtPumpEvents, PumpStatus};
 
 const EXITCODE_SUCCESS : i32 = 0;
 const EXITCODE_CPULOADFAILS : i32 = 2;
@@ -49,9 +51,9 @@ fn create_window_builder(romname: &str)-> winit::window::WindowBuilder{
 }
 
 #[cfg(not(target_os = "windows"))]
-fn create_window_builder(romname: &str)-> WindowAttributes {
-    WindowAttributes::new()
-        .with_title(&("RBoy - ".to_owned() + romname))
+fn create_window_builder(romname: &str)-> glium::winit::window::WindowAttributes {
+    glium::winit::window::WindowAttributes::new()
+        .with_title("RBoy - ".to_owned() + romname)
 }
 
 #[derive(Debug)]
@@ -151,28 +153,30 @@ fn real_main() -> i32 {
     if cpu.is_none() { return EXITCODE_CPULOADFAILS; }
     let mut cpu = cpu.unwrap();
 
-    // let cpal_audio_stream = None;
+    let mut cpal_audio_stream = None;
     if opt_audio {
-        // let player = CpalPlayer::get();
-        // match player {
-        //     Some((v, s)) => {
-        //         cpu.enable_audio(Box::new(v) as Box<dyn AudioPlayer>);
-        //         cpal_audio_stream = Some(s);
-        //     },
-        //     None => {
-        //         warn("Could not open audio device");
-        //         return EXITCODE_CPULOADFAILS;
-        //     },
-        // }
+        let player = CpalPlayer::get();
+        match player {
+            Some((v, s)) => {
+                cpu.enable_audio(Box::new(v) as Box<dyn AudioPlayer>);
+                cpal_audio_stream = Some(s);
+            },
+            None => {
+                warn("Could not open audio device");
+                return EXITCODE_CPULOADFAILS;
+            },
+        }
     }
     let romname = cpu.romname();
 
     let (sender1, receiver1) = mpsc::channel();
     let (sender2, receiver2) = mpsc::sync_channel(1);
 
-    let mut event_loop = glium::winit::event_loop::EventLoop::builder().build().unwrap();
-    let window_builder = create_window_builder(&romname);
-    let (window, display) = glium::backend::glutin::SimpleWindowBuilder::new().set_window_builder(window_builder).build(&event_loop);
+    let mut event_loop = glium::winit::event_loop::EventLoop::new().unwrap();
+    let window_attributes = create_window_builder(&romname);
+    let (window, display) = glium::backend::glutin::SimpleWindowBuilder::new()
+        .set_window_builder(window_attributes)
+        .build(&event_loop);
     set_window_size(&window, scale);
 
     let mut texture = glium::texture::texture2d::Texture2d::empty_with_format(
@@ -238,7 +242,7 @@ fn real_main() -> i32 {
         }
     }
 
-    // drop(cpal_audio_stream);
+    drop(cpal_audio_stream);
     drop(receiver2); // Stop CPU thread by disconnecting
     let _ = cputhread.join();
 
@@ -369,10 +373,10 @@ fn run_cpu(mut cpu: Box<Device>, sender: SyncSender<Vec<u8>>, receiver: Receiver
 }
 
 fn timer_periodic(ms: u64) -> Receiver<()> {
-    let (tx, rx) = mpsc::sync_channel(1);
-    thread::spawn(move || {
+    let (tx, rx) = std::sync::mpsc::sync_channel(1);
+    std::thread::spawn(move || {
         loop {
-            thread::sleep(std::time::Duration::from_millis(ms));
+            std::thread::sleep(std::time::Duration::from_millis(ms));
             if tx.send(()).is_err() {
                 break;
             }
@@ -388,112 +392,112 @@ fn set_window_size(window: &glium::winit::window::Window, scale: u32) {
     )));
 }
 
-// struct CpalPlayer {
-//     buffer: Arc<Mutex<Vec<(f32, f32)>>>,
-//     sample_rate: u32,
-// }
-//
-// impl CpalPlayer {
-//     fn get() -> Option<(CpalPlayer, cpal::Stream)> {
-//         let device = match cpal::default_host().default_output_device() {
-//             Some(e) => e,
-//             None => return None,
-//         };
-//
-//         // We want a config with:
-//         // chanels = 2
-//         // SampleFormat F32
-//         // Rate at around 44100
-//
-//         let wanted_samplerate = cpal::SampleRate(44100);
-//         let supported_configs = match device.supported_output_configs() {
-//             Ok(e) => e,
-//             Err(_) => return None,
-//         };
-//         let mut supported_config = None;
-//         for f in supported_configs {
-//             if f.channels() == 2 && f.sample_format() == cpal::SampleFormat::F32 {
-//                 if f.min_sample_rate() <= wanted_samplerate && wanted_samplerate <= f.max_sample_rate() {
-//                     supported_config = Some(f.with_sample_rate(wanted_samplerate));
-//                 }
-//                 else {
-//                     supported_config = Some(f.with_max_sample_rate());
-//                 }
-//                 break;
-//             }
-//         }
-//         if supported_config.is_none() {
-//             return None;
-//         }
-//
-//         let selected_config = supported_config.unwrap();
-//
-//         let sample_format = selected_config.sample_format();
-//         let config : cpal::StreamConfig = selected_config.into();
-//
-//         let err_fn = |err| eprintln!("An error occurred on the output audio stream: {}", err);
-//
-//         let shared_buffer = Arc::new(Mutex::new(Vec::new()));
-//         let stream_buffer = shared_buffer.clone();
-//
-//         let player = CpalPlayer {
-//             buffer: shared_buffer,
-//             sample_rate: config.sample_rate.0,
-//         };
-//
-//         let stream = match sample_format {
-//             cpal::SampleFormat::I8 => device.build_output_stream(&config, move|data: &mut [i8], _callback_info: &cpal::OutputCallbackInfo| cpal_thread(data, &stream_buffer), err_fn, None),
-//             cpal::SampleFormat::I16 => device.build_output_stream(&config, move|data: &mut [i16], _callback_info: &cpal::OutputCallbackInfo| cpal_thread(data, &stream_buffer), err_fn, None),
-//             cpal::SampleFormat::I32 => device.build_output_stream(&config, move|data: &mut [i32], _callback_info: &cpal::OutputCallbackInfo| cpal_thread(data, &stream_buffer), err_fn, None),
-//             cpal::SampleFormat::I64 => device.build_output_stream(&config, move|data: &mut [i64], _callback_info: &cpal::OutputCallbackInfo| cpal_thread(data, &stream_buffer), err_fn, None),
-//             cpal::SampleFormat::U8 => device.build_output_stream(&config, move|data: &mut [u8], _callback_info: &cpal::OutputCallbackInfo| cpal_thread(data, &stream_buffer), err_fn, None),
-//             cpal::SampleFormat::U16 => device.build_output_stream(&config, move|data: &mut [u16], _callback_info: &cpal::OutputCallbackInfo| cpal_thread(data, &stream_buffer), err_fn, None),
-//             cpal::SampleFormat::U32 => device.build_output_stream(&config, move|data: &mut [u32], _callback_info: &cpal::OutputCallbackInfo| cpal_thread(data, &stream_buffer), err_fn, None),
-//             cpal::SampleFormat::U64 => device.build_output_stream(&config, move|data: &mut [u64], _callback_info: &cpal::OutputCallbackInfo| cpal_thread(data, &stream_buffer), err_fn, None),
-//             cpal::SampleFormat::F32 => device.build_output_stream(&config, move|data: &mut [f32], _callback_info: &cpal::OutputCallbackInfo| cpal_thread(data, &stream_buffer), err_fn, None),
-//             cpal::SampleFormat::F64 => device.build_output_stream(&config, move|data: &mut [f64], _callback_info: &cpal::OutputCallbackInfo| cpal_thread(data, &stream_buffer), err_fn, None),
-//             sf => panic!("Unsupported sample format {}", sf),
-//         }.unwrap();
-//
-//         stream.play().unwrap();
-//
-//         Some((player, stream))
-//     }
-// }
-//
-// fn cpal_thread<T: Sample + FromSample<f32>>(outbuffer: &mut[T], audio_buffer: &Arc<Mutex<Vec<(f32, f32)>>>) {
-//     let mut inbuffer = audio_buffer.lock().unwrap();
-//     let outlen =  std::cmp::min(outbuffer.len() / 2, inbuffer.len());
-//     for (i, (in_l, in_r)) in inbuffer.drain(..outlen).enumerate() {
-//         outbuffer[i*2] = T::from_sample(in_l);
-//         outbuffer[i*2+1] = T::from_sample(in_r);
-//     }
-// }
-//
-// impl AudioPlayer for CpalPlayer {
-//     fn play(&mut self, buf_left: &[f32], buf_right: &[f32]) {
-//         debug_assert!(buf_left.len() == buf_right.len());
-//
-//         let mut buffer = self.buffer.lock().unwrap();
-//
-//         for (l, r) in buf_left.iter().zip(buf_right) {
-//             if buffer.len() > self.sample_rate as usize {
-//                 // Do not fill the buffer with more than 1 second of data
-//                 // This speeds up the resync after the turning on and off the speed limiter
-//                 return
-//             }
-//             buffer.push((*l, *r));
-//         }
-//     }
-//
-//     fn samples_rate(&self) -> u32 {
-//         self.sample_rate
-//     }
-//
-//     fn underflowed(&self) -> bool {
-//         (*self.buffer.lock().unwrap()).len() == 0
-//     }
-// }
+struct CpalPlayer {
+    buffer: Arc<Mutex<Vec<(f32, f32)>>>,
+    sample_rate: u32,
+}
+
+impl CpalPlayer {
+    fn get() -> Option<(CpalPlayer, cpal::Stream)> {
+        let device = match cpal::default_host().default_output_device() {
+            Some(e) => e,
+            None => return None,
+        };
+
+        // We want a config with:
+        // chanels = 2
+        // SampleFormat F32
+        // Rate at around 44100
+
+        let wanted_samplerate = cpal::SampleRate(44100);
+        let supported_configs = match device.supported_output_configs() {
+            Ok(e) => e,
+            Err(_) => return None,
+        };
+        let mut supported_config = None;
+        for f in supported_configs {
+            if f.channels() == 2 && f.sample_format() == cpal::SampleFormat::F32 {
+                if f.min_sample_rate() <= wanted_samplerate && wanted_samplerate <= f.max_sample_rate() {
+                    supported_config = Some(f.with_sample_rate(wanted_samplerate));
+                }
+                else {
+                    supported_config = Some(f.with_max_sample_rate());
+                }
+                break;
+            }
+        }
+        if supported_config.is_none() {
+            return None;
+        }
+
+        let selected_config = supported_config.unwrap();
+
+        let sample_format = selected_config.sample_format();
+        let config : cpal::StreamConfig = selected_config.into();
+
+        let err_fn = |err| eprintln!("An error occurred on the output audio stream: {}", err);
+
+        let shared_buffer = Arc::new(Mutex::new(Vec::new()));
+        let stream_buffer = shared_buffer.clone();
+
+        let player = CpalPlayer {
+            buffer: shared_buffer,
+            sample_rate: config.sample_rate.0,
+        };
+
+        let stream = match sample_format {
+            cpal::SampleFormat::I8 => device.build_output_stream(&config, move|data: &mut [i8], _callback_info: &cpal::OutputCallbackInfo| cpal_thread(data, &stream_buffer), err_fn, None),
+            cpal::SampleFormat::I16 => device.build_output_stream(&config, move|data: &mut [i16], _callback_info: &cpal::OutputCallbackInfo| cpal_thread(data, &stream_buffer), err_fn, None),
+            cpal::SampleFormat::I32 => device.build_output_stream(&config, move|data: &mut [i32], _callback_info: &cpal::OutputCallbackInfo| cpal_thread(data, &stream_buffer), err_fn, None),
+            cpal::SampleFormat::I64 => device.build_output_stream(&config, move|data: &mut [i64], _callback_info: &cpal::OutputCallbackInfo| cpal_thread(data, &stream_buffer), err_fn, None),
+            cpal::SampleFormat::U8 => device.build_output_stream(&config, move|data: &mut [u8], _callback_info: &cpal::OutputCallbackInfo| cpal_thread(data, &stream_buffer), err_fn, None),
+            cpal::SampleFormat::U16 => device.build_output_stream(&config, move|data: &mut [u16], _callback_info: &cpal::OutputCallbackInfo| cpal_thread(data, &stream_buffer), err_fn, None),
+            cpal::SampleFormat::U32 => device.build_output_stream(&config, move|data: &mut [u32], _callback_info: &cpal::OutputCallbackInfo| cpal_thread(data, &stream_buffer), err_fn, None),
+            cpal::SampleFormat::U64 => device.build_output_stream(&config, move|data: &mut [u64], _callback_info: &cpal::OutputCallbackInfo| cpal_thread(data, &stream_buffer), err_fn, None),
+            cpal::SampleFormat::F32 => device.build_output_stream(&config, move|data: &mut [f32], _callback_info: &cpal::OutputCallbackInfo| cpal_thread(data, &stream_buffer), err_fn, None),
+            cpal::SampleFormat::F64 => device.build_output_stream(&config, move|data: &mut [f64], _callback_info: &cpal::OutputCallbackInfo| cpal_thread(data, &stream_buffer), err_fn, None),
+            sf => panic!("Unsupported sample format {}", sf),
+        }.unwrap();
+
+        stream.play().unwrap();
+
+        Some((player, stream))
+    }
+}
+
+fn cpal_thread<T: Sample + FromSample<f32>>(outbuffer: &mut[T], audio_buffer: &Arc<Mutex<Vec<(f32, f32)>>>) {
+    let mut inbuffer = audio_buffer.lock().unwrap();
+    let outlen =  ::std::cmp::min(outbuffer.len() / 2, inbuffer.len());
+    for (i, (in_l, in_r)) in inbuffer.drain(..outlen).enumerate() {
+        outbuffer[i*2] = T::from_sample(in_l);
+        outbuffer[i*2+1] = T::from_sample(in_r);
+    }
+}
+
+impl AudioPlayer for CpalPlayer {
+    fn play(&mut self, buf_left: &[f32], buf_right: &[f32]) {
+        debug_assert!(buf_left.len() == buf_right.len());
+
+        let mut buffer = self.buffer.lock().unwrap();
+
+        for (l, r) in buf_left.iter().zip(buf_right) {
+            if buffer.len() > self.sample_rate as usize {
+                // Do not fill the buffer with more than 1 second of data
+                // This speeds up the resync after the turning on and off the speed limiter
+                return
+            }
+            buffer.push((*l, *r));
+        }
+    }
+
+    fn samples_rate(&self) -> u32 {
+        self.sample_rate
+    }
+
+    fn underflowed(&self) -> bool {
+        (*self.buffer.lock().unwrap()).len() == 0
+    }
+}
 
 struct NullAudioPlayer {}
 
