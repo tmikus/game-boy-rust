@@ -3,20 +3,20 @@
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
     <content url="file://$MODULE_DIR$">
-      <sourceFolder url="file://$MODULE_DIR$/client/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/examples" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/tests" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/benches" isTestSource="true" />
-      <sourceFolder url="file://$MODULE_DIR$/client/examples" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/client/tests" isTestSource="true" />
-      <sourceFolder url="file://$MODULE_DIR$/client/benches" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/reader/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/reader/examples" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/reader/tests" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/reader/benches" isTestSource="true" />
-      <excludeFolder url="file://$MODULE_DIR$/client/target" />
+      <sourceFolder url="file://$MODULE_DIR$/rboy/benches" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/rboy/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/rboy/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/rboy/tests" isTestSource="true" />
       <excludeFolder url="file://$MODULE_DIR$/reader/target" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
+      <excludeFolder url="file://$MODULE_DIR$/rboy/target" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

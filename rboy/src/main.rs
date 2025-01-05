@@ -43,16 +43,15 @@ enum GBEvent {
 }
 
 #[cfg(target_os = "windows")]
-fn create_window_builder(romname: &str)-> winit::window::WindowBuilder{
-    use winit::platform::windows::WindowBuilderExtWindows;
-    return winit::window::WindowBuilder::new()
+fn create_window_builder(romname: &str)-> winit::window::WindowAttributes {
+    gliumwinit::window::Window::default_attributes()
         .with_drag_and_drop(false)
-        .with_title("RBoy - ".to_owned() + romname);
+        .with_title("RBoy - ".to_owned() + romname)
 }
 
 #[cfg(not(target_os = "windows"))]
 fn create_window_builder(romname: &str)-> glium::winit::window::WindowAttributes {
-    glium::winit::window::WindowAttributes::new()
+    glium::winit::window::Window::default_attributes()
         .with_title("RBoy - ".to_owned() + romname)
 }
 
@@ -96,8 +95,8 @@ fn main() {
 fn real_main() -> i32 {
     let matches = clap::Command::new("rboy")
         .version("0.1")
-        .author("Mathijs van de Nes")
-        .about("A Gameboy Colour emulator written in Rust")
+        .author("Mathijs van de Nes and Tomasz Mikus")
+        .about("A Gameboy Colour emulator written in Rust, with a hardware cartridge support")
         .arg(clap::Arg::new("filename")
             .help("Sets the ROM file to load")
             .required(true))
@@ -117,7 +116,7 @@ fn real_main() -> i32 {
             .long("classic")
             .action(clap::ArgAction::SetTrue))
         .arg(clap::Arg::new("scale")
-            .help("Sets the scale of the interface. Default: 2")
+            .help("Sets the scale of the interface. Default: 4")
             .short('x')
             .long("scale")
             .value_parser(parse_scale_var))
@@ -143,7 +142,7 @@ fn real_main() -> i32 {
     let opt_audio = matches.get_one::<bool>("audio").copied().unwrap();
     let opt_skip_checksum = matches.get_one::<bool>("skip-checksum").copied().unwrap();
     let filename = matches.get_one::<String>("filename").unwrap();
-    let scale = matches.get_one::<u32>("scale").copied().unwrap_or(2);
+    let scale = matches.get_one::<u32>("scale").copied().unwrap_or(4);
 
     if test_mode {
         return run_test_mode(filename, opt_classic, opt_skip_checksum);
@@ -373,10 +372,10 @@ fn run_cpu(mut cpu: Box<Device>, sender: SyncSender<Vec<u8>>, receiver: Receiver
 }
 
 fn timer_periodic(ms: u64) -> Receiver<()> {
-    let (tx, rx) = std::sync::mpsc::sync_channel(1);
-    std::thread::spawn(move || {
+    let (tx, rx) = mpsc::sync_channel(1);
+    thread::spawn(move || {
         loop {
-            std::thread::sleep(std::time::Duration::from_millis(ms));
+            thread::sleep(std::time::Duration::from_millis(ms));
             if tx.send(()).is_err() {
                 break;
             }
@@ -467,7 +466,7 @@ impl CpalPlayer {
 
 fn cpal_thread<T: Sample + FromSample<f32>>(outbuffer: &mut[T], audio_buffer: &Arc<Mutex<Vec<(f32, f32)>>>) {
     let mut inbuffer = audio_buffer.lock().unwrap();
-    let outlen =  ::std::cmp::min(outbuffer.len() / 2, inbuffer.len());
+    let outlen =  std::cmp::min(outbuffer.len() / 2, inbuffer.len());
     for (i, (in_l, in_r)) in inbuffer.drain(..outlen).enumerate() {
         outbuffer[i*2] = T::from_sample(in_l);
         outbuffer[i*2+1] = T::from_sample(in_r);

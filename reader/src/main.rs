@@ -146,7 +146,7 @@ fn select_rom_bank(gpio: &mut Gpio, bank: u16) {
 
 fn write_address(gpio: &Gpio, address: u16) {
     gpio.write(LATCH_PIN_ID, Level::Low);
-    shift_out(&gpio, DATA_PIN_ID, CLOCK_PIN_ID, ((address >> 8) as u8));
-    shift_out(&gpio, DATA_PIN_ID, CLOCK_PIN_ID, ((address & 0xFF) as u8));
+    shift_out(&gpio, DATA_PIN_ID, CLOCK_PIN_ID, (address >> 8) as u8);
+    shift_out(&gpio, DATA_PIN_ID, CLOCK_PIN_ID, (address & 0xFF) as u8);
     gpio.write(LATCH_PIN_ID, Level::High);
 }
