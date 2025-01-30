@@ -4,4 +4,5 @@ version = "0.1.0"
 authors = ["Tomasz Mikus <mikus.tomasz@gmail.com>"]
 
 [dependencies]
+shuteye = "^0"
 rppal = "0.22.1"

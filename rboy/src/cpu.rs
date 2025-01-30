@@ -815,71 +815,71 @@ impl<'a> CPU<'a> {
     }
 }
 
-#[cfg(test)]
-mod test
-{
-    use super::CPU;
-    use crate::mbc;
-
-    const CPUINSTRS: &'static str = "roms/cpu_instrs.gb";
-    const CPU_SERIAL: &'static [u8] = b"cpu_instrs\n\n01:ok  02:ok  03:ok  04:ok  05:ok  06:ok  07:ok  08:ok  09:ok  10:ok  11:ok  \n\nPassed all tests\n";
-    const GPU_CLASSIC_CHECKSUM: u32 = 3112234583;
-    const GPU_COLOR_CHECKSUM: u32 = 938267576;
-
-    #[test]
-    fn cpu_instrs_classic()
-    {
-        let mut sum_classic = 0_u32;
-        let mut output = Vec::new();
-
-        {
-            let serial = |v: u8| { output.push(v); None };
-            let cart = mbc::FileBackedMBC::new(CPUINSTRS.into(), false).unwrap();
-            let mut c = match CPU::new(Box::new(cart), Some(Box::new(serial)))
-            {
-                Err(message) => { panic!("{}", message); },
-                Ok(cpu) => cpu,
-            };
-            let mut ticks = 0;
-            while ticks < 63802933 * 4
-            {
-                ticks += c.do_cycle();
-            }
-            for i in 0 .. c.mmu.gpu.data.len()
-            {
-                sum_classic = sum_classic.wrapping_add((c.mmu.gpu.data[i] as u32).wrapping_mul(i as u32));
-            }
-        }
-
-        assert!(&*output == CPU_SERIAL, "Serial did not output the expected result");
-        assert!(sum_classic == GPU_CLASSIC_CHECKSUM, "GPU did not produce expected graphics");
-    }
-
-    #[test]
-    fn cpu_instrs_color() {
-        let mut sum_color = 0_u32;
-        let mut output = Vec::new();
-
-        {
-            let serial = |v| { output.push(v); None };
-            let cart = mbc::FileBackedMBC::new(CPUINSTRS.into(), false).unwrap();
-            let mut c = match CPU::new_cgb(Box::new(cart), Some(Box::new(serial)))
-            {
-                Err(message) => { panic!("{}", message); },
-                Ok(cpu) => cpu,
-            };
-            let mut ticks = 0;
-            while ticks < 63802933 * 2
-            {
-                ticks += c.do_cycle();
-            }
-            for i in 0 .. c.mmu.gpu.data.len()
-            {
-                sum_color = sum_color.wrapping_add((c.mmu.gpu.data[i] as u32).wrapping_mul(i as u32));
-            }
-        }
-
-        assert!(&*output == CPU_SERIAL, "Serial did not output the expected result");
-        assert!(sum_color == GPU_COLOR_CHECKSUM, "GPU did not produce expected graphics");
-    }
-}
+// #[cfg(test)]
+// mod test
+// {
+//     use super::CPU;
+//     use crate::mbc;
+//
+//     const CPUINSTRS: &'static str = "roms/cpu_instrs.gb";
+//     const CPU_SERIAL: &'static [u8] = b"cpu_instrs\n\n01:ok  02:ok  03:ok  04:ok  05:ok  06:ok  07:ok  08:ok  09:ok  10:ok  11:ok  \n\nPassed all tests\n";
+//     const GPU_CLASSIC_CHECKSUM: u32 = 3112234583;
+//     const GPU_COLOR_CHECKSUM: u32 = 938267576;
+//
+//     #[test]
+//     fn cpu_instrs_classic()
+//     {
+//         let mut sum_classic = 0_u32;
+//         let mut output = Vec::new();
+//
+//         {
+//             let serial = |v: u8| { output.push(v); None };
+//             let cart = mbc::FileBackedMBC::new(CPUINSTRS.into(), false).unwrap();
+//             let mut c = match CPU::new(Box::new(cart), Some(Box::new(serial)))
+//             {
+//                 Err(message) => { panic!("{}", message); },
+//                 Ok(cpu) => cpu,
+//             };
+//             let mut ticks = 0;
+//             while ticks < 63802933 * 4
+//             {
+//                 ticks += c.do_cycle();
+//             }
+//             for i in 0 .. c.mmu.gpu.data.len()
+//             {
+//                 sum_classic = sum_classic.wrapping_add((c.mmu.gpu.data[i] as u32).wrapping_mul(i as u32));
+//             }
+//         }
+//
+//         assert!(&*output == CPU_SERIAL, "Serial did not output the expected result");
+//         assert!(sum_classic == GPU_CLASSIC_CHECKSUM, "GPU did not produce expected graphics");
+//     }
+//
+//     #[test]
+//     fn cpu_instrs_color() {
+//         let mut sum_color = 0_u32;
+//         let mut output = Vec::new();
+//
+//         {
+//             let serial = |v| { output.push(v); None };
+//             let cart = mbc::FileBackedMBC::new(CPUINSTRS.into(), false).unwrap();
+//             let mut c = match CPU::new_cgb(Box::new(cart), Some(Box::new(serial)))
+//             {
+//                 Err(message) => { panic!("{}", message); },
+//                 Ok(cpu) => cpu,
+//             };
+//             let mut ticks = 0;
+//             while ticks < 63802933 * 2
+//             {
+//                 ticks += c.do_cycle();
+//             }
+//             for i in 0 .. c.mmu.gpu.data.len()
+//             {
+//                 sum_color = sum_color.wrapping_add((c.mmu.gpu.data[i] as u32).wrapping_mul(i as u32));
+//             }
+//         }
+//
+//         assert!(&*output == CPU_SERIAL, "Serial did not output the expected result");
+//         assert!(sum_color == GPU_COLOR_CHECKSUM, "GPU did not produce expected graphics");
+//     }
+// }

@@ -1,8 +1,9 @@
 use crate::mbc::{MBC, ram_banks, rom_banks};
+use crate::mbc::cartridge_reader::CartridgeReader;
 use crate::StrResult;
 
 pub struct MBC5 {
-    rom: Vec<u8>,
+    cartridge_reader: CartridgeReader,
     ram: Vec<u8>,
     rombank: usize,
     rambank: usize,
@@ -14,21 +15,21 @@ pub struct MBC5 {
 }
 
 impl MBC5 {
-    pub fn new(data: Vec<u8>) -> StrResult<MBC5> {
-        let subtype = data[0x147];
+    pub fn new(mut cartridge_reader: CartridgeReader) -> MBC5 {
+        let subtype = cartridge_reader.read_byte(0x147);
         let has_battery = match subtype {
             0x1B | 0x1E => true,
             _ => false,
         };
         let rambanks = match subtype {
-            0x1A | 0x1B | 0x1D | 0x1E => ram_banks(data[0x149]),
+            0x1A | 0x1B | 0x1D | 0x1E => ram_banks(cartridge_reader.read_byte(0x149)),
             _ => 0,
         };
         let ramsize = 0x2000 * rambanks;
-        let rombanks = rom_banks(data[0x148]);
+        let rombanks = rom_banks(cartridge_reader.read_byte(0x148));
 
         let res = MBC5 {
-            rom: data,
+            cartridge_reader,
             ram: ::std::iter::repeat(0u8).take(ramsize).collect(),
             rombank: 1,
             rambank: 0,
@@ -39,17 +40,23 @@ impl MBC5 {
             rambanks: rambanks,
         };
 
-        Ok(res)
+        res
     }
 }
 
 impl MBC for MBC5 {
-    fn readrom(&self, a: u16) -> u8 {
-        let idx = if a < 0x4000 { a as usize }
-        else { self.rombank * 0x4000 | ((a as usize) & 0x3FFF) };
-        *self.rom.get(idx).unwrap_or(&0)
+    fn readrom(&mut self, a: u16) -> u8 {
+        let bank = if a < 0x4000 {
+            0
+        } else {
+            self.rombank
+        };
+        self.cartridge_reader.read_byte_from_bank(bank as u16, a & 0x3fff)
+        // let idx = if a < 0x4000 { a as usize }
+        // else { self.rombank * 0x4000 | ((a as usize) & 0x3FFF) };
+        // *self.rom.get(idx).unwrap_or(&0)
     }
-    fn readram(&self, a: u16) -> u8 {
+    fn readram(&mut self, a: u16) -> u8 {
         if !self.ram_on { return 0 }
         self.ram[self.rambank * 0x2000 | ((a as usize) & 0x1FFF)]
     }

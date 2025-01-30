@@ -97,9 +97,6 @@ fn real_main() -> i32 {
         .version("0.1")
         .author("Mathijs van de Nes and Tomasz Mikus")
         .about("A Gameboy Colour emulator written in Rust, with a hardware cartridge support")
-        .arg(clap::Arg::new("filename")
-            .help("Sets the ROM file to load")
-            .required(true))
         .arg(clap::Arg::new("serial")
             .help("Prints the data from the serial port to stdout")
             .short('s')
@@ -109,11 +106,6 @@ fn real_main() -> i32 {
             .help("Emulates a gameboy printer")
             .short('p')
             .long("printer")
-            .action(clap::ArgAction::SetTrue))
-        .arg(clap::Arg::new("classic")
-            .help("Forces the emulator to run in classic Gameboy mode")
-            .short('c')
-            .long("classic")
             .action(clap::ArgAction::SetTrue))
         .arg(clap::Arg::new("scale")
             .help("Sets the scale of the interface. Default: 4")
@@ -125,10 +117,6 @@ fn real_main() -> i32 {
             .short('a')
             .long("audio")
             .action(clap::ArgAction::SetTrue))
-        .arg(clap::Arg::new("skip-checksum")
-            .help("Skips verification of the cartridge checksum")
-            .long("skip-checksum")
-            .action(clap::ArgAction::SetTrue))
         .arg(clap::Arg::new("test-mode")
             .help("Starts the emulator in a special test mode")
             .long("test-mode")
@@ -138,17 +126,14 @@ fn real_main() -> i32 {
     let test_mode = matches.get_one::<bool>("test-mode").copied().unwrap();
     let opt_serial = matches.get_one::<bool>("serial").copied().unwrap();
     let opt_printer = matches.get_one::<bool>("printer").copied().unwrap();
-    let opt_classic = matches.get_one::<bool>("classic").copied().unwrap();
     let opt_audio = matches.get_one::<bool>("audio").copied().unwrap();
-    let opt_skip_checksum = matches.get_one::<bool>("skip-checksum").copied().unwrap();
-    let filename = matches.get_one::<String>("filename").unwrap();
     let scale = matches.get_one::<u32>("scale").copied().unwrap_or(4);
 
     if test_mode {
-        return run_test_mode(filename, opt_classic, opt_skip_checksum);
+        return run_test_mode();
     }
 
-    let cpu = construct_cpu(filename, opt_classic, opt_serial, opt_printer, opt_skip_checksum);
+    let cpu = construct_cpu(opt_serial, opt_printer);
     if cpu.is_none() { return EXITCODE_CPULOADFAILS; }
     let mut cpu = cpu.unwrap();
 
@@ -311,11 +296,8 @@ fn warn(message: &str) {
     eprintln!("{}", message);
 }
 
-fn construct_cpu(filename: &str, classic_mode: bool, output_serial: bool, output_printer: bool, skip_checksum: bool) -> Option<Box<Device>> {
-    let opt_c = match classic_mode {
-        true => Device::new(filename, skip_checksum),
-        false => Device::new_cgb(filename, skip_checksum),
-    };
+fn construct_cpu(output_serial: bool, output_printer: bool) -> Option<Box<Device>> {
+    let opt_c = Device::new_cgb();
     let mut c = match opt_c
     {
         Ok(cpu) => { cpu },
@@ -514,11 +496,8 @@ impl AudioPlayer for NullAudioPlayer {
     }
 }
 
-fn run_test_mode(filename: &str, classic_mode: bool, skip_checksum: bool) -> i32 {
-    let opt_cpu = match classic_mode {
-        true => Device::new(filename, skip_checksum),
-        false => Device::new_cgb(filename, skip_checksum),
-    };
+fn run_test_mode() -> i32 {
+    let opt_cpu = Device::new_cgb();
     let mut cpu = match opt_cpu {
         Err(errmsg) => { warn(errmsg); return EXITCODE_CPULOADFAILS; },
         Ok(cpu) => cpu,

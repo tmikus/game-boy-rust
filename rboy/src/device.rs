@@ -20,24 +20,9 @@ fn stdoutprinter(v: u8) -> Option<u8> {
 }
 
 impl Device {
-    pub fn new(romname: &str, skip_checksum: bool) -> StrResult<Device> {
-        let cart = mbc::FileBackedMBC::new(romname.into(), skip_checksum)?;
-        CPU::new(Box::new(cart), None).map(|cpu| Device { cpu: cpu })
-    }
-
-    pub fn new_cgb(romname: &str, skip_checksum: bool) -> StrResult<Device> {
-        let cart = mbc::FileBackedMBC::new(romname.into(), skip_checksum)?;
+    pub fn new_cgb() -> StrResult<Device> {
+        let cart = mbc::HardwareMBC::new()?;
         CPU::new_cgb(Box::new(cart), None).map(|cpu| Device { cpu: cpu })
-    }
-
-    pub fn new_from_buffer(romdata: Vec<u8>, skip_checksum: bool) -> StrResult<Device> {
-        let cart = mbc::get_mbc(romdata, skip_checksum)?;
-        CPU::new(cart, None).map(|cpu| Device { cpu: cpu })
-    }
-
-    pub fn new_cgb_from_buffer(romdata: Vec<u8>, skip_checksum: bool) -> StrResult<Device> {
-        let cart = mbc::get_mbc(romdata, skip_checksum)?;
-        CPU::new_cgb(cart, None).map(|cpu| Device { cpu: cpu })
     }
 
     pub fn do_cycle(&mut self) -> u32 {
@@ -98,7 +83,7 @@ impl Device {
         self.cpu.mmu.keypad.keydown(key);
     }
 
-    pub fn romname(&self) -> String {
+    pub fn romname(&mut self) -> String {
         self.cpu.mmu.mbc.romname()
     }
 
