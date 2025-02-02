@@ -21,7 +21,7 @@ fn stdoutprinter(v: u8) -> Option<u8> {
 
 impl Device {
     pub fn new_cgb() -> StrResult<Device> {
-        let cart = mbc::HardwareMBC::new()?;
+        let cart = mbc::FileBackedMBC::new(true)?;
         CPU::new_cgb(Box::new(cart), None).map(|cpu| Device { cpu: cpu })
     }
 

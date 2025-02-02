@@ -1,9 +1,8 @@
 use crate::mbc::{MBC, ram_banks, rom_banks};
-use crate::mbc::cartridge_reader::CartridgeReader;
 use crate::StrResult;
 
 pub struct MBC1 {
-    cartridge_reader: CartridgeReader,
+    rom: Vec<u8>,
     ram: Vec<u8>,
     ram_on: bool,
     ram_updated:bool,
@@ -16,17 +15,17 @@ pub struct MBC1 {
 }
 
 impl MBC1 {
-    pub fn new(mut cartridge_reader: CartridgeReader) -> MBC1 {
-        let (has_battery, rambanks) = match cartridge_reader.read_byte(0x147) {
-            0x02 => (false, ram_banks(cartridge_reader.read_byte(0x149))),
-            0x03 => (true, ram_banks(cartridge_reader.read_byte(0x149))),
+    pub fn new(data: Vec<u8>) -> StrResult<MBC1> {
+        let (has_battery, rambanks) = match data[0x147] {
+            0x02 => (false, ram_banks(data[0x149])),
+            0x03 => (true, ram_banks(data[0x149])),
             _ => (false, 0),
         };
-        let rombanks = rom_banks(cartridge_reader.read_byte(0x148));
+        let rombanks = rom_banks(data[0x148]);
         let ramsize = rambanks * 0x2000;
 
         let res = MBC1 {
-            cartridge_reader,
+            rom: data,
             ram: ::std::iter::repeat(0u8).take(ramsize).collect(),
             ram_on: false,
             banking_mode: 0,
@@ -38,12 +37,12 @@ impl MBC1 {
             rambanks: rambanks,
         };
 
-        res
+        Ok(res)
     }
 }
 
 impl MBC for MBC1 {
-    fn readrom(&mut self, a: u16) -> u8 {
+    fn readrom(&self, a: u16) -> u8 {
         let bank = if a < 0x4000 {
             if self.banking_mode == 0 {
                 0
@@ -55,10 +54,10 @@ impl MBC for MBC1 {
         else {
             self.rombank
         };
-        // self.cartridge_reader.read_byte_from_bank(bank as u16, a & 0x3fff)
-        self.cartridge_reader.read_byte_from_bank(bank as u16, a)
+        let idx = bank * 0x4000 | ((a as usize) & 0x3FFF);
+        *self.rom.get(idx).unwrap_or(&0xFF)
     }
-    fn readram(&mut self, a: u16) -> u8 {
+    fn readram(&self, a: u16) -> u8 {
         if !self.ram_on { return 0xFF }
         let rambank = if self.banking_mode == 1 { self.rambank } else { 0 };
         self.ram[(rambank * 0x2000) | ((a & 0x1FFF) as usize)]

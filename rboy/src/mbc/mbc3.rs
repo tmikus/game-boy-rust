@@ -4,10 +4,9 @@ use crate::StrResult;
 use std::io::prelude::*;
 use std::time;
 use std::convert::TryInto;
-use crate::mbc::cartridge_reader::CartridgeReader;
 
 pub struct MBC3 {
-    cartridge_reader: CartridgeReader,
+    rom: Vec<u8>,
     ram: Vec<u8>,
     rombank: usize,
     rambank: usize,
@@ -22,14 +21,14 @@ pub struct MBC3 {
 }
 
 impl MBC3 {
-    pub fn new(mut cartridge_reader: CartridgeReader) -> MBC3 {
-        let subtype = cartridge_reader.read_byte(0x147);
+    pub fn new(data: Vec<u8>) -> StrResult<MBC3> {
+        let subtype = data[0x147];
         let has_battery = match subtype {
             0x0F | 0x10 | 0x13 => true,
             _ => false,
         };
         let rambanks = match subtype {
-            0x10 | 0x12 | 0x13 => ram_banks(cartridge_reader.read_byte(0x149)),
+            0x10 | 0x12 | 0x13 => ram_banks(data[0x149]),
             _ => 0,
         };
         let ramsize = rambanks * 0x2000;
@@ -39,7 +38,7 @@ impl MBC3 {
         };
 
         let res = MBC3 {
-            cartridge_reader,
+            rom: data,
             ram: ::std::iter::repeat(0u8).take(ramsize).collect(),
             rombank: 1,
             rambank: 0,
@@ -53,7 +52,7 @@ impl MBC3 {
             rtc_zero: rtc,
         };
 
-        res
+        Ok(res)
     }
 
     fn latch_rtc_reg(&mut self) {
@@ -111,19 +110,12 @@ impl MBC3 {
 }
 
 impl MBC for MBC3 {
-    fn readrom(&mut self, a: u16) -> u8 {
-        let bank = if a < 0x4000 {
-            0
-        } else {
-            self.rombank
-        };
-        // self.cartridge_reader.read_byte_from_bank(bank as u16, a & 0x3fff)
-        self.cartridge_reader.read_byte_from_bank(bank as u16, a)
-        // let idx = if a < 0x4000 { a as usize }
-        // else { self.rombank * 0x4000 | ((a as usize) & 0x3FFF) };
-        // *self.rom.get(idx).unwrap_or(&0xFF)
+    fn readrom(&self, a: u16) -> u8 {
+        let idx = if a < 0x4000 { a as usize }
+        else { self.rombank * 0x4000 | ((a as usize) & 0x3FFF) };
+        *self.rom.get(idx).unwrap_or(&0xFF)
     }
-    fn readram(&mut self, a: u16) -> u8 {
+    fn readram(&self, a: u16) -> u8 {
         if !self.ram_on { return 0xFF }
         if !self.selectrtc && self.rambank < self.rambanks {
             self.ram[self.rambank * 0x2000 | ((a as usize) & 0x1FFF)]
