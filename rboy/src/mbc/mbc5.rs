@@ -51,7 +51,8 @@ impl MBC for MBC5 {
         } else {
             self.rombank
         };
-        self.cartridge_reader.read_byte_from_bank(bank as u16, a & 0x3fff)
+        // self.cartridge_reader.read_byte_from_bank(bank as u16, a & 0x3fff)
+        self.cartridge_reader.read_byte_from_bank(bank as u16, a)
         // let idx = if a < 0x4000 { a as usize }
         // else { self.rombank * 0x4000 | ((a as usize) & 0x3FFF) };
         // *self.rom.get(idx).unwrap_or(&0)

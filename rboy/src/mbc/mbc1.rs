@@ -55,7 +55,8 @@ impl MBC for MBC1 {
         else {
             self.rombank
         };
-        self.cartridge_reader.read_byte_from_bank(bank as u16, a & 0x3fff)
+        // self.cartridge_reader.read_byte_from_bank(bank as u16, a & 0x3fff)
+        self.cartridge_reader.read_byte_from_bank(bank as u16, a)
     }
     fn readram(&mut self, a: u16) -> u8 {
         if !self.ram_on { return 0xFF }
